@@ -612,7 +612,7 @@ export class CacheOperation {
 			}
 
 			//save to json
-			this.plugin.settings.todoistTasksData.projects = projects;
+			this.plugin.settings.todoistTasksData.projects = { results: projects };
 
 			return true;
 		} catch (error) {
