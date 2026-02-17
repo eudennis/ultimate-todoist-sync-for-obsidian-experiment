@@ -126,6 +126,10 @@ export class TodoistNewAPI {
 				taskData.duration_unit = undefined;
 			}
 
+			if(this.plugin.settings.removeObsidianLinks && description) {
+				taskData.description = ''
+			}
+
 			if(this.plugin.settings.debugMode) {
 				console.log("Todoist Task data to be added: ", taskData);
 			}
@@ -174,19 +178,40 @@ export class TodoistNewAPI {
 		}
 	}
 
-	// TODO prepare for response with 100+ projects
+	// Updated: Retrieve all projects using the new REST API and handle pagination if present
 	async getAllProjects() {
 		const token = this.plugin.settings.todoistAPIToken;
+		const allProjects = [];
+		let nextCursor = undefined;
 		try {
-			const response = await requestUrl({
-				url: "https://todoist.com/api/v1/projects",
-				method: "GET",
-				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-			});
-			return response.json;
+			do {
+				const url = new URL("https://todoist.com/api/v1/projects?limit=100");
+				if (nextCursor) {
+					url.searchParams.append("cursor", nextCursor);
+				}
+				const response = await requestUrl({
+					url: url.toString(),
+					method: "GET",
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+				const data = response.json;
+
+				// The API returns an array of projects and possibly a next_cursor property
+				if (Array.isArray(data)) {
+					allProjects.push(...data);
+				} else if (data && Array.isArray(data.results)) {
+					allProjects.push(...data.results);
+				} else if (data && Array.isArray(data.projects)) {
+					allProjects.push(...data.projects);
+				}
+
+				// Pagination: look for next_cursor in the response body
+				nextCursor = data.next_cursor ? data.next_cursor : undefined;
+			} while (nextCursor !== undefined);
+			return allProjects;
 		} catch (error) {
 			console.error("Error getting projects", error);
 			return false;

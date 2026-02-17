@@ -112,6 +112,7 @@ export interface AnotherSimpleTodoistSyncSettings {
 	changeDateOrder: boolean;
 	linksAppURI: boolean;
 	delayedSync: boolean;
+	removeObsidianLinks: boolean;
 }
 
 export const DefaultAppSettings: Partial<AnotherSimpleTodoistSyncSettings> = {
@@ -141,6 +142,7 @@ export const DefaultAppSettings: Partial<AnotherSimpleTodoistSyncSettings> = {
 	changeDateOrder: false,
 	linksAppURI: false,
 	delayedSync: false,
+	removeObsidianLinks: false,
 };
 
 export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
@@ -584,6 +586,20 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.linksAppURI)
 						.onChange((value) => {
 							this.plugin.settings.linksAppURI = value;
+							this.plugin.saveSettings();
+						}),
+				);
+		}
+
+		if (this.plugin.settings.experimentalFeatures) {
+			new Setting(containerEl)
+				.setName("Remove Obsidian file name from task description")
+				.setDesc('By default, this plugins adds the file name to the task description. Enable this option to remove it.')
+				.addToggle((component) =>
+					component
+						.setValue(this.plugin.settings.removeObsidianLinks)
+						.onChange((value) => {
+							this.plugin.settings.removeObsidianLinks = value;
 							this.plugin.saveSettings();
 						}),
 				);

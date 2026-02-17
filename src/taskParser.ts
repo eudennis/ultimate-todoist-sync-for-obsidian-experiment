@@ -208,7 +208,10 @@ export class TaskParser {
 		if (!hasParent && labels) {
 			// Matching tags and projects
 			for (const label of labels) {
-				const labelName = label.replace(/#/g, "");
+				let labelName = label.replace(/#/g, "");
+				if (labelName.includes("/")) {
+					labelName = labelName.split("/").pop() ?? labelName;
+				}
 				const hasProjectId =
 					this.plugin.cacheOperation?.getProjectIdByNameFromCache(labelName);
 				if (!hasProjectId) {
@@ -503,7 +506,7 @@ export class TaskParser {
 	getTaskContentFromLineText(lineText: string) {
 		const regex_remove_rules = {
 			remove_priority: /\s!!([1-4])\s/,
-			remove_tags: /(^|\s)(#[\w\d\u4e00-\u9fa5-]+)/g,
+			remove_tags: /(^|\s)(#[\w\u4e00-\u9fa5\-/]+)/g,
 			remove_space: /^\s+|\s+$/g,
 			remove_date: /((🗓️|📅|📆|🗓|@)\s?\d{2,4}-\d{1,2}-\d{1,2})/,
 			remove_time: /((⏰|⏲|\$)\s?\d{2}:\d{2})/,
@@ -546,7 +549,7 @@ export class TaskParser {
 
 	//get all tags from task text
 	getAllTagsFromLineText(lineText: string) {
-		const regex_tags_search = /#[\w\u4e00-\u9fa5-]+/g;
+		const regex_tags_search = /#[\w\u4e00-\u9fa5\-/]+/g;
 		let tags: string[] = lineText.match(regex_tags_search) || [];
 
 		if (tags) {
@@ -559,7 +562,7 @@ export class TaskParser {
 
 	// Get the first match to user as a section
 	getFirstSectionFromLineText(line_text: string) {
-		const regex_section_search = /\/\/\/[\w\u4e00-\u9fa5-]+/g;
+		const regex_section_search = /\/\/\/[\w\u4e00-\u9fa5\-/]+/g;
 		const section = line_text.match(regex_section_search) || [];
 
 		const section_raw = section.toString().replace("///", "");
