@@ -296,7 +296,7 @@ export class FileOperation {
 	// sync updated task due date  to the file
 	async syncUpdatedTaskDueDateToTheFile(evt: {
 		object_id: string;
-		extra_data: { due_date: string };
+		extra_data: { due_date: string, last_due_date: string };
 	}) {
 		const taskId = evt.object_id;
 
@@ -341,6 +341,11 @@ export class FileOperation {
 						this.plugin.taskParser?.ISOStringToLocalClockTimeString(
 							evt.extra_data.due_date,
 						) || "";
+				}
+				if(lineTaskTime !== "" && newTaskTime === ""){
+					newTaskTime = this.plugin.taskParser?.ISOStringToLocalClockTimeString(
+						evt.extra_data.due_date,
+					) || "";
 				}
 				// TODO how to handle when the task has the new "time slot" with start + finish time?
 

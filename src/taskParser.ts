@@ -906,7 +906,8 @@ export class TaskParser {
 			}
 
 			const localTimeString = `${timeHourString}:${timeMinuteString}`;
-
+			console.log("Parsed local time string:", timeHourString, timeMinuteString);
+			console.log("Parsed local time string:", localTimeString);
 			return localTimeString;
 		} catch (error) {
 			console.error(

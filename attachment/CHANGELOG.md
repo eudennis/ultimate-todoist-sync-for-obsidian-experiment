@@ -1,5 +1,13 @@
 ## CHANGELOG
 
+## 2026-04-13
+
+### 0.5.11
+
+- Updated key packages dependencies
+- Fixing bug #51
+-
+
 ## 2026-02-16
 
 ### 0.5.10

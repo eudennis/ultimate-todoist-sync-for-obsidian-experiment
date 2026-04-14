@@ -1105,6 +1105,7 @@ export class TodoistSync {
 				object_id: e.object_id,
 				extra_data: {
 					due_date: e.extra_data.due_date as string,
+					last_due_date: e.extra_data.last_due_date as string,
 				},
 			});
 		}
