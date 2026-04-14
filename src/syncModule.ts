@@ -858,7 +858,7 @@ export class TodoistSync {
 						message += " Deadline was changed.";
 					}
 
-					if (!lineTask_todoist_id === null) {
+					if (lineTask_todoist_id !== null) {
 						if (this.plugin.settings.debugMode) {
 							console.log(`Sent a Notice with the message: ${message}`);
 						}
@@ -1094,7 +1094,7 @@ export class TodoistSync {
 		if (content) {
 			this.plugin.cacheOperation?.modifyTaskToCacheByID(e.object_id, content);
 		}
-		if (!e.parent_item_id === null) {
+		if (e.parent_item_id !== null) {
 			new Notice(`The content of Task ${e.parent_item_id} has been modified.`);
 		}
 	}
@@ -1113,7 +1113,7 @@ export class TodoistSync {
 		if (due) {
 			this.plugin.cacheOperation?.modifyTaskToCacheByID(e.object_id, { due });
 		}
-		if (!e.parent_item_id === null) {
+		if (e.parent_item_id !== null) {
 			new Notice(`The due date of Task ${e.parent_item_id} has been modified.`);
 		}
 	}

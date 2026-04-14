@@ -1,4 +1,4 @@
-import { TodoistApi } from "@doist/todoist-api-typescript";
+import { TodoistApi } from "@doist/todoist-sdk";
 import type AnotherSimpleTodoistSync from "main";
 import type { App } from "obsidian";
 import { requestUrl } from "obsidian";
