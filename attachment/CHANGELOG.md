@@ -1,5 +1,11 @@
 ## CHANGELOG
 
+## 2026-05-19
+
+### 0.6.0
+
+- Added "Import task from Todoist link" experimental feature — opens a command palette entry that lets users paste a Todoist task URL, fetch the task from the API, preview it, and insert it into the current note with content, due date, labels, priority, and the sync tag already set so it stays in bidirectional sync.
+
 ## 2026-04-13
 
 ### 0.5.11

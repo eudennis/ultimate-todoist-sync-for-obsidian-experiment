@@ -113,6 +113,7 @@ export interface AnotherSimpleTodoistSyncSettings {
 	linksAppURI: boolean;
 	delayedSync: boolean;
 	removeObsidianLinks: boolean;
+	enableImportFromTodoistLink: boolean;
 }
 
 export const DefaultAppSettings: Partial<AnotherSimpleTodoistSyncSettings> = {
@@ -143,6 +144,7 @@ export const DefaultAppSettings: Partial<AnotherSimpleTodoistSyncSettings> = {
 	linksAppURI: false,
 	delayedSync: false,
 	removeObsidianLinks: false,
+	enableImportFromTodoistLink: false,
 };
 
 export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
@@ -619,6 +621,22 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 							this.plugin.settings.enableFullVaultSync = value;
 							this.plugin.saveSettings();
 							new Notice("Full vault sync is enabled.");
+						}),
+				);
+		}
+
+		if (this.plugin.settings.experimentalFeatures) {
+			new Setting(containerEl)
+				.setName("Import task from Todoist link")
+				.setDesc(
+					'Adds a command to the palette ("Import task from Todoist link") to fetch a Todoist task by URL and insert it into the current note, ready to sync.',
+				)
+				.addToggle((component) =>
+					component
+						.setValue(this.plugin.settings.enableImportFromTodoistLink)
+						.onChange((value) => {
+							this.plugin.settings.enableImportFromTodoistLink = value;
+							this.plugin.saveSettings();
 						}),
 				);
 		}
