@@ -39,6 +39,7 @@ Create, edit, and delete tasks from within Obsidian.md to your Todoist.
 | Optional app link        | ✅                       | ✅                       |
 | Assign project to task   | ✅                       | 🔜                       |
 | Manage Deadline Date     | ✅                       | 🔜                       |
+| Import task from URL     | ✅ (experimental)        | —                        |
 
 -   [1] Task priority only support one-way synchronization
 -   [2] Task notes/comments only support one-way synchronization from Todoist to Obsidian.
@@ -118,6 +119,16 @@ Create, edit, and delete tasks from within Obsidian.md to your Todoist.
 
 </details>
 
+### Import a task from a Todoist link
+
+Enable the **Import task from Todoist link** option under _Experimental features_ in settings. Then use the command palette (`Import task from Todoist link`) to paste any Todoist task URL, preview the task, and insert it into the current note already formatted for bidirectional sync.
+
+Supported URL formats:
+- `https://app.todoist.com/app/task/TASK_ID`
+- `https://app.todoist.com/app/task/task-name-TASK_ID` (slugged URLs)
+- `https://app.todoist.com/app/project/PROJECT_ID/task/TASK_ID`
+- `todoist://task?id=TASK_ID` (app URI)
+
 ### Set a default project for each file separately
 
 The default project in the setting applies to all files. You can set a separate default project for each file using the comand `Set default project for Todoist task in the current file` from the command menu.
@@ -141,6 +152,10 @@ where !completed and contains(tags, "#tdsync")
 #### Expose tasks meta data
 
 If you have the [Obsidian DataView plugin](https://github.com/blacksmithgu/obsidian-dataview) you will be able to see the task ID on your tasks within Obsidian.
+
+## Contributing & AI-assisted development
+
+This repository includes a [`CLAUDE.md`](./CLAUDE.md) file that documents the architecture, data flow, key classes, and common gotchas for AI tools (Claude, Copilot, Cursor, etc.). If you are using an AI assistant to review or contribute to this repo, point it at that file first.
 
 ## Disclaimer
 

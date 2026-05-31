@@ -1,10 +1,14 @@
 ## CHANGELOG
 
-## 2026-05-19
+## 2026-05-31
 
 ### 0.6.0
 
-- Added "Import task from Todoist link" experimental feature — opens a command palette entry that lets users paste a Todoist task URL, fetch the task from the API, preview it, and insert it into the current note with content, due date, labels, priority, and the sync tag already set so it stays in bidirectional sync.
+- Added **Import task from Todoist link** experimental feature — use the command palette to paste any Todoist task URL, preview the fetched task (content, due date, labels, priority), and insert it into the current note already formatted for bidirectional sync
+- URL parser handles modern Todoist slugged URLs (e.g. `task-name-ID`), project-scoped URLs, and `todoist://` app URIs
+- Duplicate guard: warns and aborts if the task is already present in the current file
+- Fixed date/time formatting to correctly split Todoist v1 API `due.date` (which carries the full datetime string) into `📅YYYY-MM-DD` and `⏰HH:MM` with proper timezone handling via `Intl.DateTimeFormat`
+- Added `CLAUDE.md` to the repository — documents architecture, data flow, and gotchas for AI-assisted development
 
 ## 2026-04-13
 
