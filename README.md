@@ -39,6 +39,7 @@ Create, edit, and delete tasks from within Obsidian.md to your Todoist.
 | Optional app link        | ✅                       | ✅                       |
 | Assign project to task   | ✅                       | 🔜                       |
 | Manage Deadline Date     | ✅                       | 🔜                       |
+| Import task from URL     | ✅ (experimental)        | —                        |
 
 -   [1] Task priority only support one-way synchronization
 -   [2] Task notes/comments only support one-way synchronization from Todoist to Obsidian.
@@ -118,6 +119,16 @@ Create, edit, and delete tasks from within Obsidian.md to your Todoist.
 
 </details>
 
+### Import a task from a Todoist link
+
+Enable the **Import task from Todoist link** option under _Experimental features_ in settings. Then use the command palette (`Import task from Todoist link`) to paste any Todoist task URL, preview the task, and insert it into the current note already formatted for bidirectional sync.
+
+Supported URL formats:
+- `https://app.todoist.com/app/task/TASK_ID`
+- `https://app.todoist.com/app/task/task-name-TASK_ID` (slugged URLs)
+- `https://app.todoist.com/app/project/PROJECT_ID/task/TASK_ID`
+- `todoist://task?id=TASK_ID` (app URI)
+
 ### Set a default project for each file separately
 
 The default project in the setting applies to all files. You can set a separate default project for each file using the comand `Set default project for Todoist task in the current file` from the command menu.
@@ -142,6 +153,10 @@ where !completed and contains(tags, "#tdsync")
 
 If you have the [Obsidian DataView plugin](https://github.com/blacksmithgu/obsidian-dataview) you will be able to see the task ID on your tasks within Obsidian.
 
+## Contributing & AI-assisted development
+
+This repository includes a [`CLAUDE.md`](./CLAUDE.md) file that documents the architecture, data flow, key classes, and common gotchas for AI tools (Claude, Copilot, Cursor, etc.). If you are using an AI assistant to review or contribute to this repo, point it at that file first.
+
 ## Disclaimer
 
 This plugin is for learning purposes only. The author and contributors makes no representations or warranties of any kind, express or implied, about the accuracy, completeness, or usefulness of this plugin and shall not be liable for any losses or damages resulting from the use of this plugin.
@@ -152,7 +167,57 @@ By using this plugin, you agree to be bound by all the terms of this disclaimer.
 
 ## Contributing
 
-Contributions are welcome! If you'd like to contribute to the plugin, please feel free to submit a pull request.
+Contributions are welcome! If you find a bug or have a feature request, please open an issue. Pull requests are also appreciated.
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (v18+)
+- A local Obsidian vault for manual testing
+
+### Setup
+
+```bash
+git clone https://github.com/eudennis/ultimate-todoist-sync-for-obsidian-experiment.git
+cd ultimate-todoist-sync-for-obsidian-experiment
+npm install
+```
+
+### npm Scripts
+
+| Script | Command | Purpose |
+|---|---|---|
+| `dev` | `npm run dev` | Starts esbuild in watch mode. Rebuilds `main.js` on every file change. Use this during development. |
+| `build` | `npm run build` | Runs TypeScript type-checking, builds `main.js` for production (minified, no sourcemaps), then auto-bumps the patch version in `manifest.json` (e.g. `0.6.0` → `0.6.1`). Run before submitting a PR. |
+| `build-without-tsc` | `npm run build-without-tsc` | Same as `build` but skips the TypeScript type check and does not bump the version. Useful for a quick production build when you're confident types are clean. |
+| `build-local` | `npm run build-local` | Same type-check + production build as `build`, then bumps a build number (4th version component) in `LocalBuild/another-simple-todoist-sync/manifest.json` and copies `main.js` and `styles.css` there. Use this to iterate locally in Obsidian without touching the source version. |
+| `version` | `npm version <patch\|minor\|major>` | Bumps the version in `package.json` and syncs it to `manifest.json` and `versions.json` (Obsidian's compatibility map). Also stages those files for commit. |
+
+### Testing Changes Locally
+
+There is no automated test suite. All testing is manual.
+
+#### Option A — iterate quickly with `dev` (watch mode)
+
+1. Run `npm run dev` to start the watcher.
+2. Copy `main.js`, `manifest.json`, and `styles.css` into your vault's plugin directory:
+   ```
+   <vault>/.obsidian/plugins/another-simple-todoist-sync/
+   ```
+3. In Obsidian, run **Reload app without saving** (or fully restart Obsidian) to load the new build.
+4. Enable **Debug mode** in the plugin's settings to get verbose console output (`Ctrl+Shift+I` opens the developer console).
+5. Exercise the feature you changed and check the console for errors.
+
+Repeat steps 1–5 after each code change (the watcher rebuilds `main.js` automatically; you still need to reload Obsidian).
+
+#### Option B — production build with `build-local`
+
+Point your Obsidian vault's plugin directory at `LocalBuild/another-simple-todoist-sync/` once, then run:
+
+```bash
+npm run build-local
+```
+
+Each run type-checks, builds a production bundle, bumps a build number in the local manifest, and copies `main.js` and `styles.css` into `LocalBuild/another-simple-todoist-sync/`. Reload Obsidian to pick up the new build. The source `manifest.json` is not modified.
 
 ## License
 

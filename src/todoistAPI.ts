@@ -572,14 +572,19 @@ export class TodoistNewAPI {
 					Authorization: `Bearer ${token}`,
 					"Content-Type": "application/json",
 				},
+				throw: false,
 			});
 
-			if (response.status >= 400) {
-				throw new Error(`API returned error status: ${response.status}`);
+			if (this.plugin.settings.debugMode) {
+				console.log(`getTaskById(${taskId}) → status ${response.status}`, response.json);
 			}
 
-			const task = response.json;
-			return task;
+			if (response.status >= 400) {
+				const detail = response.json ? JSON.stringify(response.json) : `status ${response.status}`;
+				throw new Error(`API returned error status ${response.status}: ${detail}`);
+			}
+
+			return response.json;
 		} catch (error) {
 			if (error instanceof Error) {
 				throw new Error(`Error retrieving task: ${error.message}`);

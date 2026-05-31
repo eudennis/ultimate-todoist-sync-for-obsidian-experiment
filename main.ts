@@ -12,6 +12,7 @@ import { CacheOperation } from "./src/cacheOperation";
 import { FileOperation } from "./src/fileOperation";
 import { TodoistSync } from "./src/syncModule";
 import { SetDefaultProjectInTheFilepathModal } from "src/modal";
+import { ImportTaskFromTodoistModal } from "src/importTaskModal";
 
 export default class AnotherSimpleTodoistSync extends Plugin {
 	settings: AnotherSimpleTodoistSyncSettings;
@@ -336,6 +337,28 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 					return;
 				}
 				this.cacheOperation?.cleanupOldPluginVersionData();
+			},
+		});
+
+		this.addCommand({
+			id: "asts-import-task-from-todoist-link",
+			name: "Import task from Todoist link",
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				if (!view?.file) {
+					return;
+				}
+				if (!this.settings.apiInitialized) {
+					new Notice("Please set the Todoist API token first.");
+					return;
+				}
+				if (!this.settings.experimentalFeatures || !this.settings.enableImportFromTodoistLink) {
+					new Notice('Enable "Import task from Todoist link" under Experimental Features in the plugin settings.');
+					return;
+				}
+				if (!this.checkModuleClass()) {
+					return;
+				}
+				new ImportTaskFromTodoistModal(this.app, this, editor, view.file.path);
 			},
 		});
 

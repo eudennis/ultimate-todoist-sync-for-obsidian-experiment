@@ -1,5 +1,16 @@
 ## CHANGELOG
 
+## 2026-05-31
+
+### 0.6.0
+
+- Added **Import task from Todoist link** experimental feature — use the command palette to paste any Todoist task URL, preview the fetched task (content, due date, labels, priority), and insert it into the current note already formatted for bidirectional sync. Addressing issue #52
+- URL parser handles modern Todoist slugged URLs (e.g. `task-name-ID`), project-scoped URLs, and `todoist://` app URIs
+- Duplicate guard: warns and aborts if the task is already present in the current file
+- Fixed date/time formatting to correctly split Todoist v1 API `due.date` (which carries the full datetime string) into `📅YYYY-MM-DD` and `⏰HH:MM` with proper timezone handling via `Intl.DateTimeFormat`
+- Added `CLAUDE.md` to the repository — documents architecture, data flow, and gotchas for AI-assisted development
+- Fixed #54 — Priority tags (e.g. `!!2`) are now recognized anywhere in the task line, not only when placed before the `#tdsync` tag
+
 ## 2026-04-13
 
 ### 0.5.11

@@ -34,3 +34,6 @@ src/syncModule.js
 src/settings.js
 src/modal.js
 src/fileOperation.js
+
+# Local build output for testing
+LocalBuild/

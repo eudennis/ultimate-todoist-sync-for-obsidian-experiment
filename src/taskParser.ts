@@ -505,7 +505,7 @@ export class TaskParser {
 	//   Remove everything that is not the task content
 	getTaskContentFromLineText(lineText: string) {
 		const regex_remove_rules = {
-			remove_priority: /\s!!([1-4])\s/,
+			remove_priority: /\s!!([1-4])(?:\s|$)/,
 			remove_tags: /(^|\s)(#[\w\u4e00-\u9fa5\-/]+)/g,
 			remove_space: /^\s+|\s+$/g,
 			remove_date: /((🗓️|📅|📆|🗓|@)\s?\d{2,4}-\d{1,2}-\d{1,2})/,
@@ -781,8 +781,8 @@ export class TaskParser {
 
 	//	Task priority from 1 (for urgent) up to 4 (default priority).
 	getTaskPriority(lineText: string): number {
-		// It checks with spaces before and after to avoid any strings containing the same values
-		const regex_test_priority_rule = /\s!!([1-4])\s/;
+		// Space before; space or end-of-line after (fixes priority at end of line, issue #54)
+		const regex_test_priority_rule = /\s!!([1-4])(?:\s|$)/;
 		const regex_priority_check = regex_test_priority_rule.exec(lineText);
 
 		function invertPriorityOrder(priority: number) {
