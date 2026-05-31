@@ -144,7 +144,7 @@ export const DefaultAppSettings: Partial<AnotherSimpleTodoistSyncSettings> = {
 	linksAppURI: false,
 	delayedSync: false,
 	removeObsidianLinks: false,
-	enableImportFromTodoistLink: false,
+	enableImportFromTodoistLink: true,
 };
 
 export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
