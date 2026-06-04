@@ -1,5 +1,14 @@
 ## CHANGELOG
 
+## 2026-06-04
+
+### 0.7.0
+
+- Upgraded `@doist/todoist-sdk` 9.1.1 → 10.3.0. This clears the only `npm audit` advisory in the dependency tree: the SDK 9.x line transitively depended on `uuid <11.1.1` (GHSA-w5hq-g745-h8pq, moderate). `npm audit` now reports 0 vulnerabilities. The SDK's used surface (`new TodoistApi()` and `deleteTask()`) is unchanged in v10, so sync behaviour is unaffected.
+- Bumped dev dependencies: `@typescript-eslint/eslint-plugin` and `@typescript-eslint/parser` 8.60.0 → 8.60.1; refreshed `obsidian` type definitions to 1.13.0.
+- Removed the unused `@types/uuid` devDependency (`uuid` is never imported in the codebase).
+- README: removed the stale "early April 2025" Caution callout and the v0.6.1 Note callout.
+
 ## 2026-06-02
 
 ### 0.6.1
