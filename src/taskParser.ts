@@ -622,7 +622,7 @@ export class TaskParser {
 
 		const todoistTaskTags = todoistTask.labels;
 
-		//content 是否修改
+		// Check if tags were modified
 		const tagsModified =
 			lineTaskTags.length === todoistTaskTags.length &&
 			lineTaskTags
@@ -677,7 +677,7 @@ export class TaskParser {
 		lineTask: { isCompleted: boolean },
 		todoistTask: { isCompleted: boolean },
 	) {
-		//status 是否修改
+		// Check if status was modified
 		const statusModified = lineTask.isCompleted === todoistTask.isCompleted;
 		return statusModified;
 	}
@@ -759,7 +759,7 @@ export class TaskParser {
 		line_project_id: string,
 		todoist_project_id: string,
 	) {
-		//project 是否修改
+		// Check if project was modified
 		return line_project_id === todoist_project_id;
 	}
 
@@ -771,7 +771,7 @@ export class TaskParser {
 		return check_indentation.test(text);
 	}
 
-	//判断制表符的数量
+	// Count the number of leading tab characters
 	getTabIndentation(lineText: string) {
 		// TAB_INDENTATION: /^(\t+)/,
 		const tab_indentation_search = /^(\t+)/;
@@ -917,8 +917,7 @@ export class TaskParser {
 		}
 	}
 
-	//extra date from obsidian event
-	// 使用示例
+	// Convert UTC ISO string to local datetime string
 	ISOStringToLocalDatetimeString(utcTimeString: string) {
 		try {
 			if (utcTimeString === null) {
@@ -936,8 +935,7 @@ export class TaskParser {
 		}
 	}
 
-	//convert date from obsidian event
-	// 使用示例
+	// Convert local datetime string to UTC ISO string
 	localDateStringToUTCDatetimeString(localDatetimeString: string) {
 		try {
 			if (localDatetimeString === null) {
@@ -955,8 +953,7 @@ export class TaskParser {
 		}
 	}
 
-	//convert date from obsidian event
-	// 使用示例
+	// Convert local date string to UTC date string
 	localDateStringToUTCDateString(localDateString: string) {
 		try {
 			if (localDateString === null) {

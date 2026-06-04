@@ -15,15 +15,16 @@ import { SetDefaultProjectInTheFilepathModal } from "src/modal";
 import { ImportTaskFromTodoistModal } from "src/importTaskModal";
 
 export default class AnotherSimpleTodoistSync extends Plugin {
-	settings: AnotherSimpleTodoistSyncSettings;
+	settings!: AnotherSimpleTodoistSyncSettings;
+	private settingsCache: string | null = null;
 	todoistNewAPI: TodoistNewAPI | undefined;
 	taskParser: TaskParser | undefined;
 	cacheOperation: CacheOperation | undefined;
 	fileOperation: FileOperation | undefined;
 	todoistSync: TodoistSync | undefined;
-	lastLines: Map<string, number>;
-	statusBar: HTMLElement;
-	syncLock: boolean;
+	lastLines!: Map<string, number>;
+	statusBar!: HTMLElement;
+	syncLock!: boolean;
 
 	
 
@@ -216,13 +217,13 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 			),
 		);
 
-		//监听 rename 事件,更新 task data 中的 path
+		// Listen for rename events and update the task data path
 		this.registerEvent(
 			this.app.vault.on("rename", async (file, oldpath) => {
 				if (!this.settings.apiInitialized) {
 					return;
 				}
-				//读取frontMatter
+				// Read frontMatter
 				//const frontMatter = await this.fileOperation.getFrontMatter(file)
 				const frontMatter = await this.cacheOperation?.getFileMetadataByFilePath(oldpath);
 				if (frontMatter === null || frontMatter?.todoistTasks === undefined) {
@@ -376,26 +377,45 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 		try {
 			const data = await this.loadData();
 			this.settings = Object.assign({}, DefaultAppSettings, data);
-			return true; // 返回 true 表示设置加载成功
+			this.settingsCache = this.normalizeSettingsForCompare(this.settings);
+			return true;
 		} catch (error) {
 			console.error("Failed to load data:", error);
-			return false; // 返回 false 表示设置加载失败
+			return false;
 		}
 	}
 
 	async saveSettings() {
 		try {
-			// 验证设置是否存在且不为空
 			if (this.settings && Object.keys(this.settings).length > 0) {
+				const normalized = this.normalizeSettingsForCompare(this.settings);
+				if (this.settingsCache === normalized) return;
 				await this.saveData(this.settings);
+				this.settingsCache = normalized;
 			} else {
 				console.error(
 					"Settings are empty or invalid, not saving to avoid data loss.",
 				);
 			}
 		} catch (error) {
-			// 打印或处理错误
 			console.error("Error saving settings:", error);
+		}
+	}
+
+	private normalizeSettingsForCompare(settings: AnotherSimpleTodoistSyncSettings): string {
+		try {
+			const copy = JSON.parse(JSON.stringify(settings));
+			if (copy.todoistTasksData) {
+				if (Array.isArray(copy.todoistTasksData.tasks)) {
+					copy.todoistTasksData.tasks.sort((a: any, b: any) => (a.id > b.id ? 1 : -1));
+				}
+				if (Array.isArray(copy.todoistTasksData.projects?.results)) {
+					copy.todoistTasksData.projects.results.sort((a: any, b: any) => (a.id > b.id ? 1 : -1));
+				}
+			}
+			return JSON.stringify(copy);
+		} catch {
+			return JSON.stringify(settings);
 		}
 	}
 
@@ -434,9 +454,8 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 		}
 
 		if (!this.settings.initialized) {
-			//创建备份文件夹备份todoist 数据
 			try {
-				//第一次启动插件，备份todoist 数据
+				// First plugin startup — initialize modules and back up Todoist data
 				this.taskParser = new TaskParser(this.app, this);
 
 				//initialize file operation
@@ -445,7 +464,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 				//initialize Todoist sync module
 				this.todoistSync = new TodoistSync(this.app, this);
 
-				//每次启动前备份所有数据
+				// Back up all Todoist resources before each startup
 				this.todoistSync.backupTodoistAllResources();
 			} catch (error) {
 				console.error(`error creating user data folder: ${error}`);
@@ -453,7 +472,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 				return;
 			}
 
-			//初始化settings
+			// Mark plugin as initialized
 			this.settings.initialized = true;
 			this.saveSettings();
 			new Notice(
@@ -525,7 +544,6 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 			) {
 				const lastLine = this.lastLines.get(fileName as string);
 
-				// 执行你想要的操作
 				const lastLineText = view.editor.getLine(lastLine as number);
 				if (!this.checkModuleClass()) {
 					return;
@@ -556,11 +574,12 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 		}
 		const target = evt.target as HTMLInputElement;
 
-		const taskElement = target.closest("div"); //使用 evt.target.closest() 方法寻找特定的父元素，而不是直接访问事件路径中的特定索引
+		// Use closest() to find the nearest div parent rather than indexing into the event path
+		const taskElement = target.closest("div");
 		//console.log(taskElement)
 		if (!taskElement) return;
-		const regex = /\[tid:: (\d+)\]/; // 匹配 [todoist_id:: 数字] 格式的字符串
-		// const regex = /\[todoist_id:: (\d+)\]/; // 匹配 [todoist_id:: 数字] 格式的字符串
+		const regex = /\[tid:: (\d+)\]/; // Match [tid:: number] format
+		// const regex = /\[todoist_id:: (\d+)\]/;
 		const match = taskElement.textContent?.match(regex) || false;
 		if (match) {
 			const taskId = match[1];

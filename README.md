@@ -10,6 +10,9 @@ Create, edit, and delete tasks from within Obsidian.md to your Todoist.
 >
 > _Some features works only Todoist -> Obsidian, others by-directional. Find more details on the feature table below._
 
+> [!NOTE]
+> **v0.6.1** — Fixed a cloud sync conflict issue ([#53](https://github.com/eudennis/ultimate-todoist-sync-for-obsidian-experiment/issues/53)) where the plugin was writing `data.json` too frequently, causing thousands of duplicate files with iCloud and similar services. The plugin now skips disk writes when settings have not meaningfully changed.
+
 ![Alt Text](/attachment/new_demo.gif)
 
 <details>

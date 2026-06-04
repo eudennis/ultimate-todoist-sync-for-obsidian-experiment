@@ -252,14 +252,14 @@ export class FileOperation {
 		extra_data: { content: string };
 	}) {
 		const taskId = evt.object_id;
-		// 获取任务文件路径
+		// Get the task file path
 		const currentTask =
 			await this.plugin.cacheOperation?.loadTaskFromCacheID(taskId);
 		const filepath = currentTask?.path;
 		if (!filepath) return;
 		const file = this.app.vault.getAbstractFileByPath(filepath);
 
-		// 获取文件对象并更新内容
+		// Get the file object and update its content
 		let content: string | undefined;
 		if (file instanceof TFile) {
 			content = await this.app.vault.read(file);
@@ -368,8 +368,8 @@ export class FileOperation {
 				}
 
 				if (newTaskDueDate === "") {
-					//remove 日期from text
-					const regexRemoveDate = /(🗓️|📅|📆|🗓|@)\s?\d{4}-\d{2}-\d{2}/; //匹配日期🗓️2023-03-07"
+					// Remove date from text
+					const regexRemoveDate = /(🗓️|📅|📆|🗓|@)\s?\d{4}-\d{2}-\d{2}/; // Match date format like 🗓️YYYY-MM-DD
 					lines[i] = line.replace(regexRemoveDate, "");
 					modified = true;
 					new Notice(`Due date removed from ${taskId}.`);
@@ -419,14 +419,14 @@ export class FileOperation {
 		const datetime = this.plugin.taskParser?.ISOStringToLocalDatetimeString(
 			evt.event_date,
 		);
-		// 获取任务文件路径
+		// Get the task file path
 		const currentTask =
 			await this.plugin.cacheOperation?.loadTaskFromCacheID(taskId);
 		const filepath = currentTask?.path;
 		if (!filepath) return;
 		const file = this.app.vault.getAbstractFileByPath(filepath);
 
-		// 获取文件对象并更新内容
+		// Get the file object and update its content
 		let content: string | undefined;
 		if (file instanceof TFile) {
 			content = await this.app.vault.read(file);
@@ -459,7 +459,7 @@ export class FileOperation {
 		}
 	}
 
-	//避免使用该方式，通过view可以获得实时更新的value
+	// Avoid this approach; use the editor view to get a live-updated value instead
 	async readContentFromFilePath(filepath: string) {
 		try {
 			const file = this.app.vault.getAbstractFileByPath(filepath);

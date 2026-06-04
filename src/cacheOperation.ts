@@ -239,7 +239,7 @@ export class CacheOperation {
 		}
 	}
 
-	// append event 到 Cache
+	// Append a single event to cache
 	appendEventToCache(
 		event: {
 			id: string;
@@ -263,7 +263,7 @@ export class CacheOperation {
 		}
 	}
 
-	// append events 到 Cache
+	// Append multiple events to cache
 	appendEventsToCache(
 		events: {
 			id: string;
@@ -287,7 +287,7 @@ export class CacheOperation {
 		}
 	}
 
-	// 从 Cache 文件中读取所有events
+	// Load all events from cache
 	loadEventsFromCache() {
 		try {
 			const savedEvents = this.plugin.settings.todoistTasksData.events;
@@ -297,7 +297,7 @@ export class CacheOperation {
 		}
 	}
 
-	// 追加到 Cache 文件
+	// Append a task to cache
 	appendTaskToCache(task: Task) {
 		// TODO for some reason the task receives duration even when was not specified, so I had to add this extra step to remove it. I need to find a better way to handle this.
 		const taskToAppend =
@@ -436,12 +436,12 @@ export class CacheOperation {
 		return targetSection ? targetSection.id : null;
 	}
 
-	//覆盖update指定id的task
+	// Replace the cached task with the given ID
 	updateTaskToCacheByID(task: Task) {
 		try {
-			//删除就的task
+			// Remove the old task
 			this.deleteTaskFromCache(task.id);
-			//添加新的task
+			// Insert the updated task
 			this.appendTaskToCache(task);
 		} catch (error) {
 			console.error(`Error updating task to Cache: ${error}`);
@@ -513,12 +513,11 @@ export class CacheOperation {
 		try {
 			const savedTasks = this.plugin.settings.todoistTasksData.tasks;
 
-			// 遍历数组以查找具有指定 ID 的项
+			// Find the item with the given ID and update it
 			for (let i = 0; i < savedTasks.length; i++) {
 				if (savedTasks[i].id === taskId) {
-					// 修改对象的属性
 					(savedTasks[i] as Task).isCompleted = false;
-					break; // 找到并修改了该项，跳出循环
+					break;
 				}
 			}
 			this.plugin.settings.todoistTasksData.tasks = savedTasks;
@@ -533,22 +532,21 @@ export class CacheOperation {
 		try {
 			const savedTasks = this.plugin.settings.todoistTasksData.tasks;
 
-			// 遍历数组以查找具有指定 ID 的项
+			// Find the item with the given ID and update it
 			for (let i = 0; i < savedTasks.length; i++) {
 				if (savedTasks[i].id === taskId) {
-					// 修改对象的属性
 					(savedTasks[i] as Task).isCompleted = true;
-					break; // 找到并修改了该项，跳出循环
+					break;
 				}
 			}
 			this.plugin.settings.todoistTasksData.tasks = savedTasks;
 		} catch (error) {
 			console.error(`Error close task to Cache file: ${error}`);
-			throw error; // 抛出错误使调用方能够捕获并处理它
+			throw error; // Re-throw so the caller can handle it
 		}
 	}
 
-	// 通过 ID 删除任务
+	// Delete task by ID
 	deleteTaskFromCache(taskId: string) {
 		try {
 			const savedTasks = this.plugin.settings.todoistTasksData.tasks;
