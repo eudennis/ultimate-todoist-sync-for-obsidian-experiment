@@ -45,6 +45,14 @@ npm_scripts/
   version-bump.mjs       # Bumps version in manifest.json and versions.json
   build-local.mjs        # Builds and copies output to LocalBuild/ for local testing
   bump-patch.mjs         # Bumps patch version in manifest.json after a production build
+tests/                   # Vitest unit tests (see "Testing")
+  __mocks__/             # Hand-written mocks for `obsidian` and `@doist/todoist-sdk`
+  fixtures/              # Sample markdown lines, Todoist tasks, activity events
+  helpers/mockPlugin.ts  # createMockPlugin / createMockApp factories
+  setup.ts               # Forces TZ=UTC for deterministic date/time tests
+  *.test.ts              # One suite per covered module
+vitest.config.ts         # Vitest config (runtime module aliases → mocks, coverage)
+tsconfig.test.json       # TypeScript config for type-checking the tests
 attachment/
   CHANGELOG.md           # Release history
 ```
@@ -65,6 +73,11 @@ npm run build-without-tsc
 
 # Build and copy to LocalBuild/ for local Obsidian testing
 npm run build-local
+
+# Run the unit-test suite (Vitest)
+npm test
+npm run test:watch      # watch mode
+npm run test:coverage   # with coverage report
 
 # Bump version
 npm run version
@@ -226,10 +239,25 @@ These are gated behind the "Experimental features" toggle in settings:
 
 ## Testing
 
-There is no automated test suite. Testing is manual:
-1. Build with `npm run dev`
-2. Copy output files to Obsidian vault plugin directory (or use `npm run build-local`)
-3. Reload Obsidian and exercise the feature
-4. Use **Debug mode** in settings to enable verbose console logging
+### Automated tests (Vitest)
 
-Enable debug mode (`settings.debugMode = true`) for verbose console output during development.
+Run with `npm test` (`vitest run`), `npm run test:watch`, or `npm run test:coverage`. **CI (`.github/workflows/ci.yml`) runs `npm test` on every pull request and push to `master`.**
+
+- **Runner**: Vitest (chosen over Jest because the project is ESNext/`isolatedModules` and Vitest uses esbuild — the same transform as the production build — with no extra transpilers).
+- **Location**: all suites live in `tests/`, one `*.test.ts` per covered module.
+- **Mocks** (`tests/__mocks__/`): `obsidian` and `@doist/todoist-sdk` have no usable runtime in Node, so they are aliased to hand-written stubs via `vitest.config.ts` `resolve.alias`. `TodoistNewAPI` calls `requestUrl` imported from `obsidian` directly, so the obsidian mock exports it as a `vi.fn()`; tests drive it with `vi.mocked(requestUrl).mockResolvedValueOnce(...)` / `mockRejectedValueOnce(...)`.
+- **Helpers** (`tests/helpers/mockPlugin.ts`): `createMockPlugin()` / `createMockApp()` build the minimal `plugin`/`app` shapes the modules reach into. `createMockPlugin` spreads `DefaultAppSettings` (so `alternativeKeywords` defaults to `true`, `customSyncTag` to `#tdsync`) — override per test, e.g. `createMockPlugin({ alternativeKeywords: false })`.
+- **Determinism**: `tests/setup.ts` sets `process.env.TZ = "UTC"` so `Intl`/`Date`-based code (`ISOStringToLocalClockTimeString`, `ImportTaskFromTodoistModal.extractTime`) is stable in CI.
+- **Type-checking**: `tsconfig.test.json` type-checks the test files against the **real** obsidian/SDK types (the runtime mocks are aliased only by Vitest, not by tsc). The production build's `tsc` excludes `tests/`. Run `npx tsc -p tsconfig.test.json --noEmit` to type-check tests.
+- **Covered**: `taskParser` (markdown parsing — the highest-value, near-pure logic), `cacheOperation` (in-memory cache/metadata), `importTaskModal` (URL parsing, priority inversion, line formatting; private methods are reached via `(modal as any).method()`), `todoistAPI` (request-payload assembly and `filterActivityEvents`).
+- **Out of scope** (need a full Obsidian/integration environment, not unit-tested): `main.ts`, `syncModule.ts`, `fileOperation.ts`.
+
+When adding a parsing/cache/import/API feature, add or update the matching `tests/*.test.ts` suite.
+
+### Manual testing in Obsidian
+
+For sync behaviour, file edits, and the settings UI:
+1. Build with `npm run dev` (or `npm run build-local`)
+2. Copy output files to the Obsidian vault plugin directory (or point the vault at `LocalBuild/`)
+3. Reload Obsidian and exercise the feature
+4. Enable **Debug mode** in settings (`settings.debugMode = true`) for verbose console logging
