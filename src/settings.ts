@@ -412,14 +412,14 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 		// 								await this.plugin.todoistNewAPI?.getTaskById(taskId);
 		// 						} catch (error) {
 		// 							if (error.message.includes("404")) {
-		// 								// 处理404错误
+		// 								// Handle 404 error
 		// 								await this.plugin.cacheOperation?.deleteTaskIdFromMetadata(
 		// 									key,
 		// 									taskId,
 		// 								);
 		// 								continue;
 		// 							}
-		// 							// 处理其他错误
+		// 							// Handle other errors
 		// 							console.error(error);
 		// 						}
 		// 					}

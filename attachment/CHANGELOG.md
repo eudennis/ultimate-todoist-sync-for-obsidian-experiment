@@ -1,5 +1,14 @@
 ## CHANGELOG
 
+## 2026-06-02
+
+### 0.6.1
+
+- Fixed #53 — Plugin no longer writes `data.json` to disk on every keystroke or sync cycle when nothing has actually changed. A normalization + cache comparison now guards `saveSettings()`: tasks and projects are sorted by ID before comparison to absorb Todoist API ordering variance. This eliminates the thousands of duplicate files (`data 2.json`, `data 2495.json`, …) reported by users with iCloud and other cloud sync services.
+- Translated all remaining Chinese-language code comments to English across `main.ts`, `syncModule.ts`, `cacheOperation.ts`, `fileOperation.ts`, `taskParser.ts`, and `settings.ts` to improve readability for future contributors.
+- Fixed TypeScript definite-assignment assertions (`!`) on class properties in `main.ts` to resolve VSCode strict-mode warnings.
+- Bumped safe devDependencies: `@typescript-eslint/eslint-plugin` and `@typescript-eslint/parser` to 8.60.0, `builtin-modules` to 5.2.0, `@types/node` to 22.19.19, `obsidian` to 1.13.0.
+
 ## 2026-05-31
 
 ### 0.6.0
