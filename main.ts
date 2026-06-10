@@ -15,7 +15,7 @@ import { SetDefaultProjectInTheFilepathModal } from "src/modal";
 import { ImportTaskFromTodoistModal } from "src/importTaskModal";
 
 export default class AnotherSimpleTodoistSync extends Plugin {
-	settings!: AnotherSimpleTodoistSyncSettings;
+	declare settings: AnotherSimpleTodoistSyncSettings;
 	private settingsCache: string | null = null;
 	todoistNewAPI: TodoistNewAPI | undefined;
 	taskParser: TaskParser | undefined;

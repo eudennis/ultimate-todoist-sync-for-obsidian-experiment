@@ -8,6 +8,9 @@
 		"build": "npx tsc -noEmit -skipLibCheck && node npm_scripts/esbuild.config.mjs production && node npm_scripts/bump-patch.mjs",
 		"build-without-tsc": "node npm_scripts/esbuild.config.mjs production",
 		"build-local": "npx tsc -noEmit -skipLibCheck && node npm_scripts/esbuild.config.mjs production && node npm_scripts/build-local.mjs",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
 		"version": "node npm_scripts/version-bump.mjs && git add manifest.json versions.json"
 	},
 	"keywords": [],
@@ -18,11 +21,13 @@
 		"@types/node": "^22.19.19",
 		"@typescript-eslint/eslint-plugin": "^8.60.1",
 		"@typescript-eslint/parser": "^8.60.1",
+		"@vitest/coverage-v8": "^4.1.8",
 		"builtin-modules": "^5.2.0",
 		"esbuild": "^0.28.0",
 		"obsidian": "latest",
 		"tslib": "^2.8.1",
-		"typescript": "~5.7"
+		"typescript": "~5.7",
+		"vitest": "^4.1.8"
 	},
 	"dependencies": {
 		"@doist/todoist-sdk": "^10.3.0"

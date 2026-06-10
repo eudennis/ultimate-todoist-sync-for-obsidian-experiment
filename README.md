@@ -187,13 +187,28 @@ npm install
 | `build` | `npm run build` | Runs TypeScript type-checking, builds `main.js` for production (minified, no sourcemaps), then auto-bumps the patch version in `manifest.json` (e.g. `0.6.0` → `0.6.1`). Run before submitting a PR. |
 | `build-without-tsc` | `npm run build-without-tsc` | Same as `build` but skips the TypeScript type check and does not bump the version. Useful for a quick production build when you're confident types are clean. |
 | `build-local` | `npm run build-local` | Same type-check + production build as `build`, then bumps a build number (4th version component) in `LocalBuild/another-simple-todoist-sync/manifest.json` and copies `main.js` and `styles.css` there. Use this to iterate locally in Obsidian without touching the source version. |
+| `test` | `npm test` | Runs the Vitest unit-test suite once (`vitest run`). This is the check CI runs on every pull request. |
+| `test:watch` | `npm run test:watch` | Runs Vitest in watch mode, re-running affected tests as you edit. |
+| `test:coverage` | `npm run test:coverage` | Runs the suite once and prints a coverage report (also writes `lcov` for editor integrations). |
 | `version` | `npm version <patch\|minor\|major>` | Bumps the version in `package.json` and syncs it to `manifest.json` and `versions.json` (Obsidian's compatibility map). Also stages those files for commit. |
 
-### Testing Changes Locally
+### Testing
 
-There is no automated test suite. All testing is manual.
+#### Automated tests (Vitest)
 
-#### Option A — iterate quickly with `dev` (watch mode)
+```bash
+npm test               # run the unit-test suite once
+npm run test:watch     # re-run on change during development
+npm run test:coverage  # run with a coverage report
+```
+
+Tests live in `tests/` and cover the plugin's pure logic — markdown task parsing (`taskParser`), the in-memory cache (`cacheOperation`), the Todoist-link import modal (`importTaskModal`), and Todoist API payload assembly (`todoistAPI`). Obsidian and the Todoist SDK are mocked under `tests/__mocks__/`, so the suite needs no vault or network access. **CI runs `npm test` on every pull request** — please keep it green and add tests when you touch parsing, cache, import, or API logic.
+
+#### Manual testing in Obsidian
+
+Sync behaviour, file edits, and the settings UI can only be exercised inside Obsidian.
+
+##### Option A — iterate quickly with `dev` (watch mode)
 
 1. Run `npm run dev` to start the watcher.
 2. Copy `main.js`, `manifest.json`, and `styles.css` into your vault's plugin directory:
@@ -206,7 +221,7 @@ There is no automated test suite. All testing is manual.
 
 Repeat steps 1–5 after each code change (the watcher rebuilds `main.js` automatically; you still need to reload Obsidian).
 
-#### Option B — production build with `build-local`
+##### Option B — production build with `build-local`
 
 Point your Obsidian vault's plugin directory at `LocalBuild/another-simple-todoist-sync/` once, then run:
 

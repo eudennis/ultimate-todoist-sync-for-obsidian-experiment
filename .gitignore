@@ -37,3 +37,6 @@ src/fileOperation.js
 
 # Local build output for testing
 LocalBuild/
+
+# Test coverage output
+coverage/
