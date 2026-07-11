@@ -5,7 +5,7 @@
 
 
 .dataview.inline-field {
-    opacity: 30%!important;
+    opacity: var(--ats-tid-opacity, 30%)!important;
 }
 .dataview.inline-field:hover {
     opacity: 100%!important;

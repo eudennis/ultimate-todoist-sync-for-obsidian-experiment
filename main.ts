@@ -40,6 +40,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 			}
 			// This adds a settings tab so the user can configure various aspects of the plugin
 			this.addSettingTab(new AnotherSimpleTodoistSyncPluginSettingTab(this.app, this));
+			this.applyTidOpacity();
 		if (!this.settings.todoistAPIToken) {
 			new Notice("Please enter your Todoist API.");
 			//return
@@ -370,7 +371,15 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 	}
 
 	async onunload() {
+		document.body.style.removeProperty("--ats-tid-opacity");
 		await this.saveSettings();
+	}
+
+	applyTidOpacity() {
+		document.body.style.setProperty(
+			"--ats-tid-opacity",
+			`${this.settings.tidOpacity}%`,
+		);
 	}
 
 	async loadSettings() {
