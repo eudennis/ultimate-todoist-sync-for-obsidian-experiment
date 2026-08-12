@@ -17,12 +17,34 @@ const prod = (process.argv[2] === "production");
 // wildcard externalizes all of them, in addition to the bare specifiers.
 const nodeBuiltins = [...builtinModules, "node:*"];
 
+// @doist/todoist-sdk's TodoistApi constructor unconditionally instantiates an
+// UploadClient for file-attachment uploads, which statically imports
+// multipart-upload.js. That module dynamically imports "fs" on its Node code
+// path. This plugin never calls any upload/attachment method, so that code
+// is dead in practice, but its presence still trips "direct filesystem
+// access" scanners on the built bundle. Stub the module out at build time
+// rather than depending on upstream to make the upload client lazy.
+const stubTodoistSdkUpload = {
+	name: "stub-todoist-sdk-upload",
+	setup(build) {
+		build.onLoad(
+			{ filter: /@doist[/\\]todoist-sdk[/\\]dist[/\\](esm|cjs)[/\\]utils[/\\]multipart-upload\.js$/ },
+			() => ({
+				contents:
+					"export async function uploadMultipartFile() { throw new Error('File uploads are not supported by this plugin.'); }",
+				loader: "js",
+			}),
+		);
+	},
+};
+
 const context = await esbuild.context({
 	banner: {
 		js: banner,
 	},
 	entryPoints: ["main.ts"],
 	bundle: true,
+	plugins: [stubTodoistSdkUpload],
 	external: [
 		"obsidian",
 		"electron",
