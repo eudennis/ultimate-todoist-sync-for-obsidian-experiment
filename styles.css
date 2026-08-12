@@ -1,27 +1,7 @@
 
-.cm-line:not(:hover):not(.cm-active) span.cm-comment {
-    display: none;
-}
-
-
 .dataview.inline-field {
-    opacity: 30%!important;
+    opacity: var(--ats-tid-opacity, 30%)!important;
 }
 .dataview.inline-field:hover {
     opacity: 100%!important;
 }
-
-
-
-
-/*
-.cm-line span.cm-comment {
-    display: none;
-}
-
-.cm-line.cm-active span.cm-comment,
-.cm-line:hover span.cm-comment {
-    display: inline-block;
-}
-
-*/

@@ -1,5 +1,13 @@
 ## CHANGELOG
 
+## 2026-08-12
+
+### 0.7.1
+
+- Added a slider to let the user select the Todoist ID comment opacity
+- Removed some unused CSS that made the comments from codeblocks disappear
+- Fixed a small issue on the build-local script to create the folder before generating files
+
 ## 2026-06-04
 
 ### 0.7.0

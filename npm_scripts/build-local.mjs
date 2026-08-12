@@ -1,7 +1,9 @@
-import { readFileSync, writeFileSync, copyFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync } from "fs";
 
 const PLUGIN_ID = "another-simple-todoist-sync";
 const LOCAL_DIR = `LocalBuild/${PLUGIN_ID}`;
+
+mkdirSync(LOCAL_DIR, { recursive: true });
 
 // Read source manifest for base version and all fields
 const sourceManifest = JSON.parse(readFileSync("manifest.json", "utf8"));

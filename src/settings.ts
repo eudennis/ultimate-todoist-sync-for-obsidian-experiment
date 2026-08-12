@@ -114,6 +114,7 @@ export interface AnotherSimpleTodoistSyncSettings {
 	delayedSync: boolean;
 	removeObsidianLinks: boolean;
 	enableImportFromTodoistLink: boolean;
+	tidOpacity: number;
 }
 
 export const DefaultAppSettings: Partial<AnotherSimpleTodoistSyncSettings> = {
@@ -145,6 +146,7 @@ export const DefaultAppSettings: Partial<AnotherSimpleTodoistSyncSettings> = {
 	delayedSync: false,
 	removeObsidianLinks: false,
 	enableImportFromTodoistLink: true,
+	tidOpacity: 30,
 };
 
 export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
@@ -637,6 +639,25 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 						.onChange((value) => {
 							this.plugin.settings.enableImportFromTodoistLink = value;
 							this.plugin.saveSettings();
+						}),
+				);
+		}
+
+		if (this.plugin.settings.experimentalFeatures) {
+			new Setting(containerEl)
+				.setName("Task ID metadata opacity")
+				.setDesc(
+					"Controls the opacity of the hidden task ID comment (tid) that this plugin appends to synced tasks. Note that Obsidian renders this the same way as other inline-field comments (e.g. Dataview), so lowering this also dims those. Defaults to 30%.",
+				)
+				.addSlider((slider) =>
+					slider
+						.setLimits(0, 100, 1)
+						.setValue(this.plugin.settings.tidOpacity)
+						.setDynamicTooltip()
+						.onChange((value) => {
+							this.plugin.settings.tidOpacity = value;
+							this.plugin.saveSettings();
+							this.plugin.applyTidOpacity();
 						}),
 				);
 		}
