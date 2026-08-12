@@ -1,44 +1,50 @@
-import js from "@eslint/js";
-import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
+import obsidianmd from "eslint-plugin-obsidianmd";
+import { defineConfig } from "eslint/config";
 
-export default [
+export default defineConfig([
 	{
-		ignores: ["node_modules/", "main.js"],
+		// npm_scripts/ are Node build tooling, not shipped plugin code, so
+		// Node-builtin/globals rules meant for the plugin runtime don't apply.
+		ignores: ["node_modules/", "main.js", "LocalBuild/", "coverage/", "tests/", "npm_scripts/", "vitest.config.ts"],
 	},
-	js.configs.recommended,
+	...obsidianmd.configs.recommended,
 	{
 		files: ["**/*.ts"],
-		plugins: {
-			"@typescript-eslint": tsPlugin,
-		},
 		languageOptions: {
 			parser: tsParser,
 			parserOptions: {
-				sourceType: "module",
-			},
-			globals: {
-				require: "readonly",
-				module: "readonly",
-				exports: "readonly",
-				process: "readonly",
-				__dirname: "readonly",
-				__filename: "readonly",
-				console: "readonly",
-				setTimeout: "readonly",
-				clearTimeout: "readonly",
-				setInterval: "readonly",
-				clearInterval: "readonly",
+				project: "./tsconfig.json",
 			},
 		},
 		rules: {
-			...tsPlugin.configs["flat/eslint-recommended"].rules,
-			...tsPlugin.configs["flat/recommended"].rules,
-			"no-unused-vars": "off",
-			"@typescript-eslint/no-unused-vars": ["error", { args: "none" }],
-			"@typescript-eslint/ban-ts-comment": "off",
+			// Popout-window compatibility rule; the recommended config ships this
+			// "off" by default, but the plugin does target popout-window support.
+			"obsidianmd/prefer-active-doc": "warn",
 			"no-prototype-builtins": "off",
 			"@typescript-eslint/no-empty-function": "off",
+
+			// Deferred: these stem from the Todoist SDK's loosely-typed response
+			// objects propagating `any` throughout the codebase. Fixing them means
+			// adding proper types across most SDK call sites, a larger effort than
+			// the scorecard-driven cleanup this config was introduced for. Revisit
+			// as a follow-up.
+			"@typescript-eslint/no-unsafe-member-access": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-return": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/no-base-to-string": "off",
+			"@typescript-eslint/no-deprecated": "off",
+			// Deferred: UI copy pass (48 hits) — separate from the scorecard's
+			// code-level findings, best done as its own review.
+			"obsidianmd/ui/sentence-case": "off",
+			// Deferred: bumping minAppVersion or gating newer API usage is a
+			// product decision, not part of this cleanup.
+			"obsidianmd/no-unsupported-api": "off",
+			// Deferred: console.log cleanup, unrelated to the scorecard findings.
+			"obsidianmd/rule-custom-message": "off",
+			"obsidianmd/settings-tab/prefer-setting-definitions": "off",
 		},
 	},
-];
+]);
