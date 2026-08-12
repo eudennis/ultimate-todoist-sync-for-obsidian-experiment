@@ -158,7 +158,14 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	async display(): Promise<void> {
+	display(): void {
+		// PluginSettingTab#display() must return void, but the settings UI
+		// needs to await async lookups (e.g. the user's Todoist profile), so
+		// the real implementation lives in this async helper.
+		void this.renderSettings();
+	}
+
+	private async renderSettings(): Promise<void> {
 		const { containerEl } = this;
 
 		containerEl.empty();
@@ -220,7 +227,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 					return;
 				}
 				this.plugin.settings.automaticSynchronizationInterval = intervalNum;
-				this.plugin.saveSettings();
+				void this.plugin.saveSettings();
 				new Notice("Settings have been updated.");
 			},
 			1000,
@@ -264,7 +271,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 						this.plugin.settings.defaultProjectName =
 							this.plugin.cacheOperation?.getProjectNameByIdFromCache(value) ??
 							"";
-						this.plugin.saveSettings();
+						void this.plugin.saveSettings();
 					}),
 			);
 
@@ -283,7 +290,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 		const debouncedTagSave = debounce(
 			(tag: string) => {
 				this.plugin.settings.customSyncTag = tag;
-				this.plugin.saveSettings();
+				void this.plugin.saveSettings();
 				new Notice("New custom sync tag have been updated.");
 			},
 			1000,
@@ -330,7 +337,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.delayedSync)
 						.onChange((value) => {
 							this.plugin.settings.delayedSync = value;
-							this.plugin.saveSettings();
+							void this.plugin.saveSettings();
 							new Notice("First sync will be delayed by 60 seconds.");
 						}),
 				);
@@ -507,7 +514,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.commentsSync)
 					.onChange((value) => {
 						this.plugin.settings.commentsSync = value;
-						this.plugin.saveSettings();
+						void this.plugin.saveSettings();
 					}),
 			);
 
@@ -524,7 +531,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 						new Notice("Please set the Todoist api first");
 						return;
 					}
-					this.plugin.todoistSync?.backupTodoistAllResources();
+					void this.plugin.todoistSync?.backupTodoistAllResources();
 				}),
 			);
 
@@ -540,7 +547,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.experimentalFeatures)
 					.onChange((value) => {
 						this.plugin.settings.experimentalFeatures = value;
-						this.plugin.saveSettings();
+						void this.plugin.saveSettings();
 						new Notice(
 							"Experimental features have been enabled. Be careful, some might not be working yet or have bugs.",
 						);
@@ -559,7 +566,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.alternativeKeywords)
 						.onChange((value) => {
 							this.plugin.settings.alternativeKeywords = value;
-							this.plugin.saveSettings();
+							void this.plugin.saveSettings();
 						}),
 				);
 		}
@@ -575,7 +582,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.changeDateOrder)
 						.onChange((value) => {
 							this.plugin.settings.changeDateOrder = value;
-							this.plugin.saveSettings();
+							void this.plugin.saveSettings();
 						}),
 				);
 		}
@@ -591,7 +598,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.linksAppURI)
 						.onChange((value) => {
 							this.plugin.settings.linksAppURI = value;
-							this.plugin.saveSettings();
+							void this.plugin.saveSettings();
 						}),
 				);
 		}
@@ -605,7 +612,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.removeObsidianLinks)
 						.onChange((value) => {
 							this.plugin.settings.removeObsidianLinks = value;
-							this.plugin.saveSettings();
+							void this.plugin.saveSettings();
 						}),
 				);
 		}
@@ -622,7 +629,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.enableFullVaultSync)
 						.onChange((value) => {
 							this.plugin.settings.enableFullVaultSync = value;
-							this.plugin.saveSettings();
+							void this.plugin.saveSettings();
 							new Notice("Full vault sync is enabled.");
 						}),
 				);
@@ -639,7 +646,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.enableImportFromTodoistLink)
 						.onChange((value) => {
 							this.plugin.settings.enableImportFromTodoistLink = value;
-							this.plugin.saveSettings();
+							void this.plugin.saveSettings();
 						}),
 				);
 		}
@@ -657,7 +664,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 						.setDynamicTooltip()
 						.onChange((value) => {
 							this.plugin.settings.tidOpacity = value;
-							this.plugin.saveSettings();
+							void this.plugin.saveSettings();
 							this.plugin.applyTidOpacity();
 						}),
 				);
@@ -681,7 +688,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 			};
 		}
 
-		const saveUserData = async () => {
+		const saveUserData = () => {
 			try {
 				this.plugin.settings.todoistTasksData.user_data = {
 					email: userResource?.email ?? "",
@@ -734,7 +741,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 			.addToggle((component) =>
 				component.setValue(this.plugin.settings.debugMode).onChange((value) => {
 					this.plugin.settings.debugMode = value;
-					this.plugin.saveSettings();
+					void this.plugin.saveSettings();
 				}),
 			);
 
