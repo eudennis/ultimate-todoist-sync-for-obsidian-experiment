@@ -96,7 +96,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 				if (!this.checkModuleClass()) {
 					return;
 				}
-				this.lineNumberCheck();
+				await this.lineNumberCheck();
 			}
 
 			if (evt.key === "Enter") {
@@ -114,7 +114,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 						return;
 					}
 
-					this.lineNumberCheck();
+					await this.lineNumberCheck();
 					if (!this.checkModuleClass()) {
 						return;
 					}
@@ -126,7 +126,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 						await this.todoistSync?.lineContentNewTaskCheck(editor, view);
 					}
 					this.syncLock = false;
-					this.saveSettings();
+					await this.saveSettings();
 				} catch (error) {
 					console.error(
 						`An error occurred while check new task in line: ${error.message}`,
@@ -154,7 +154,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 						await this.todoistSync?.deletedTaskCheck(file_path);
 					}
 					this.syncLock = false;
-					this.saveSettings();
+					await this.saveSettings();
 				} catch (error) {
 					console.error(`An error occurred while deleting tasks: ${error}`);
 					this.syncLock = false;
@@ -169,7 +169,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 				return;
 			}
 			if (this.app.workspace.activeEditor?.editor?.hasFocus()) {
-				this.lineNumberCheck();
+				await this.lineNumberCheck();
 			} else {
 				//
 			}
@@ -180,7 +180,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 				if (!this.checkModuleClass()) {
 					return;
 				}
-				this.checkboxEventHandler(evt);
+				await this.checkboxEventHandler(evt);
 				//this.todoistSync.fullTextModifiedTaskCheck()
 			}
 		});
@@ -197,7 +197,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 							return;
 						}
 
-						this.lineNumberCheck();
+						await this.lineNumberCheck();
 						if (!this.checkModuleClass()) {
 							return;
 						}
@@ -207,7 +207,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 						if (!(await this.checkAndHandleSyncLock())) return;
 						await this.todoistSync?.lineContentNewTaskCheck(editor, view);
 						this.syncLock = false;
-						this.saveSettings();
+						await this.saveSettings();
 					} catch (error) {
 						console.error(
 							`An error occurred while check new task in line: ${error.message}`,
@@ -234,7 +234,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 					return;
 				}
 				await this.cacheOperation?.updateRenamedFilePath(oldpath, file.path);
-				this.saveSettings();
+				await this.saveSettings();
 
 				//update task description
 				if (!(await this.checkAndHandleSyncLock())) return;
@@ -279,13 +279,13 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 
 		this.registerInterval(
 			window.setInterval(
-				async () => await this.scheduledSynchronization(),
+				() => void this.scheduledSynchronization(),
 				this.settings.automaticSynchronizationInterval * 1000,
 			),
 		);
 
 		this.app.workspace.on("active-leaf-change", (leaf) => {
-			this.setStatusBarText();
+			void this.setStatusBarText();
 		});
 
 		// set default  project for Todoist task in the current file
@@ -309,7 +309,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 		this.addCommand({
 			id: "asts-trigger-manual-sync",
 			name: "Trigger the Manual Sync",
-			editorCallback: (editor: Editor, view: MarkdownView) => {
+			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				if (!view) {
 					return;
 				}
@@ -321,7 +321,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 						return;
 					}
 					try {
-						this.scheduledSynchronization();
+						await this.scheduledSynchronization();
 						this.syncLock = false;
 					} catch (error) {
 						new Notice(`An error occurred while syncing.:${error}`);
@@ -334,11 +334,11 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 		this.addCommand({
 			id: "asts-cleanup-old-plugin-version-data",
 			name: "Clean data from plugin below v0.5.0",
-			editorCallback: (editor: Editor, view: MarkdownView) => {
+			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				if (!view) {
 					return;
 				}
-				this.cacheOperation?.cleanupOldPluginVersionData();
+				await this.cacheOperation?.cleanupOldPluginVersionData();
 			},
 		});
 
@@ -370,9 +370,11 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 		});
 	}
 
-	async onunload() {
+	onunload(): void {
+		// Plugin#onunload() must return void, and Obsidian doesn't await it,
+		// so this is a best-effort save.
 		activeDocument.body.style.removeProperty("--ats-tid-opacity");
-		await this.saveSettings();
+		void this.saveSettings();
 	}
 
 	applyTidOpacity() {
@@ -475,7 +477,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 				this.todoistSync = new TodoistSync(this.app, this);
 
 				// Back up all Todoist resources before each startup
-				this.todoistSync.backupTodoistAllResources();
+				await this.todoistSync.backupTodoistAllResources();
 			} catch (error) {
 				console.error(`error creating user data folder: ${error}`);
 				new Notice("error creating user data folder");
@@ -484,7 +486,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 
 			// Mark plugin as initialized
 			this.settings.initialized = true;
-			this.saveSettings();
+			await this.saveSettings();
 			new Notice(
 				"Another Simple Todoist Sync initialization successful. Todoist data has been backed up.",
 			);
@@ -500,7 +502,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 		return true;
 	}
 
-	async initializeModuleClass() {
+	initializeModuleClass() {
 		// initialize Todoist New API
 		this.todoistNewAPI = new TodoistNewAPI(this.app, this);
 
@@ -596,9 +598,9 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 			//console.log(taskId)
 			//const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 			if (target.checked) {
-				this.todoistSync?.closeTask(taskId);
+				await this.todoistSync?.closeTask(taskId);
 			} else {
-				this.todoistSync?.reopenTask(taskId);
+				await this.todoistSync?.reopenTask(taskId);
 			}
 		} else {
 			//Start full text search and check status update
@@ -652,7 +654,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 				return;
 			}
 			const defaultProjectName =
-				await this.cacheOperation?.getDefaultProjectNameForFilepath(
+				this.cacheOperation?.getDefaultProjectNameForFilepath(
 					filepath,
 				);
 			if (defaultProjectName === undefined) {
