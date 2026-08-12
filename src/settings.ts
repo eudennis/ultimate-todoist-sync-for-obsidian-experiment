@@ -15,6 +15,7 @@ export interface TodoistLabel {
 export interface TodoistSection {
 	id: string;
 	name: string;
+	project_id: string;
 }
 
 export interface TodoistUserData {

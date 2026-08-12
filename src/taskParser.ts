@@ -128,7 +128,7 @@ export class TaskParser {
 		}
 
 		let projectId = this.plugin.cacheOperation?.getDefaultProjectIdForFilepath(
-			filepath as string,
+			filepath,
 		);
 		if (!projectId) {
 			console.error("projectId was not found");

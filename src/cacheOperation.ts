@@ -61,12 +61,6 @@ export interface FileMetadata {
 	defaultProjectName?: string;
 }
 
-interface TodoistSection {
-	id: string;
-	name: string;
-	project_id: string;
-}
-
 export class CacheOperation {
 	app: App;
 	plugin: AnotherSimpleTodoistSync;
@@ -336,7 +330,7 @@ export class CacheOperation {
 		try {
 			const savedTasks = this.plugin.settings.todoistTasksData.tasks;
 			const savedTask = savedTasks.find((t: Task) => t.id === taskId);
-			return savedTask as Task | undefined;
+			return savedTask;
 		} catch (error) {
 			console.error(`Error finding task from Cache: ${error}`);
 			return undefined;
@@ -390,7 +384,7 @@ export class CacheOperation {
 				name: name,
 				id: sectionId,
 				project_id: project_id,
-			} as TodoistSection);
+			});
 		} catch (error) {
 			console.error(`Error appending section to Cache: ${error}`);
 		}

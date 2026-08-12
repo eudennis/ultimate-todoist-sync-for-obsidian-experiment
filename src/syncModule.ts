@@ -199,9 +199,7 @@ export class TodoistSync {
 					`New task "${newTask.content}" added. Task ID: ${newTask.id}`,
 				);
 				// Write new task to cache
-				this.plugin.cacheOperation?.appendTaskToCache(
-					newTask as unknown as Task,
-				);
+				this.plugin.cacheOperation?.appendTaskToCache(newTask);
 				this.plugin.cacheOperation?.appendPathToTaskInCache(
 					todoist_id,
 					filepath,
@@ -367,9 +365,7 @@ export class TodoistSync {
 						`New task "${newTask.content}" added. Task ID: ${newTask.id}`,
 					);
 					// Write new task to cache
-					this.plugin.cacheOperation?.appendTaskToCache(
-						newTask as unknown as Task,
-					);
+					this.plugin.cacheOperation?.appendTaskToCache(newTask);
 					this.plugin.cacheOperation?.appendPathToTaskInCache(
 						todoist_id,
 						filepath,
