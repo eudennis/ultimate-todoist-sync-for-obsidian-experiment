@@ -127,7 +127,7 @@ export class CacheOperation {
 	//delete filepath from filemetadata
 	async deleteFilepathFromMetadata(filepath: string) {
 		Reflect.deleteProperty(this.plugin.settings.fileMetadata, filepath);
-		this.plugin.saveSettings();
+		await this.plugin.saveSettings();
 	}
 
 	//Check errors in filemetadata where the filepath is incorrect.
@@ -160,7 +160,7 @@ export class CacheOperation {
 				if (searchResult) {
 					await this.updateRenamedFilePath(filepath, searchResult);
 				}
-				this.plugin.saveSettings();
+				await this.plugin.saveSettings();
 			}
 		}
 	}
@@ -633,7 +633,7 @@ export class CacheOperation {
 
 	async updateRenamedFilePath(oldpath: string, newpath: string) {
 		try {
-			const savedTask = await this.loadTasksFromCache();
+			const savedTask = this.loadTasksFromCache();
 			//console.log(savedTask)
 			const newTasks = savedTask.map((obj: Task) => {
 				if (obj.path === oldpath) {
@@ -642,7 +642,7 @@ export class CacheOperation {
 				return obj;
 			});
 			//console.log(newTasks)
-			await this.saveTasksToCache(newTasks);
+			this.saveTasksToCache(newTasks);
 
 			//update filepath
 			const fileMetadata = this.plugin.settings.fileMetadata;

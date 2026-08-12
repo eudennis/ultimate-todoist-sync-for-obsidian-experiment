@@ -14,7 +14,7 @@ export class FileOperation {
 	async completeTaskInTheFile(taskId: string) {
 		// Get the task file path
 		const currentTask =
-			await this.plugin.cacheOperation?.loadTaskFromCacheID(taskId);
+			this.plugin.cacheOperation?.loadTaskFromCacheID(taskId);
 		const filepath = currentTask?.path;
 		if (!filepath) return;
 		const file = this.app.vault.getAbstractFileByPath(filepath);
@@ -52,7 +52,7 @@ export class FileOperation {
 	async incompleteTaskInTheFile(taskId: string) {
 		// Get the task file path
 		const currentTask =
-			await this.plugin.cacheOperation?.loadTaskFromCacheID(taskId);
+			this.plugin.cacheOperation?.loadTaskFromCacheID(taskId);
 		const filepath = currentTask?.path;
 		if (!filepath) return;
 		const file = this.app.vault.getAbstractFileByPath(filepath);
@@ -254,7 +254,7 @@ export class FileOperation {
 		const taskId = evt.object_id;
 		// Get the task file path
 		const currentTask =
-			await this.plugin.cacheOperation?.loadTaskFromCacheID(taskId);
+			this.plugin.cacheOperation?.loadTaskFromCacheID(taskId);
 		const filepath = currentTask?.path;
 		if (!filepath) return;
 		const file = this.app.vault.getAbstractFileByPath(filepath);
@@ -302,7 +302,7 @@ export class FileOperation {
 
 		// Get the task file path
 		const currentTask =
-			await this.plugin.cacheOperation?.loadTaskFromCacheID(taskId);
+			this.plugin.cacheOperation?.loadTaskFromCacheID(taskId);
 		const filepath = currentTask?.path;
 		if (!filepath) return;
 		const file = this.app.vault.getAbstractFileByPath(filepath);
@@ -421,7 +421,7 @@ export class FileOperation {
 		);
 		// Get the task file path
 		const currentTask =
-			await this.plugin.cacheOperation?.loadTaskFromCacheID(taskId);
+			this.plugin.cacheOperation?.loadTaskFromCacheID(taskId);
 		const filepath = currentTask?.path;
 		if (!filepath) return;
 		const file = this.app.vault.getAbstractFileByPath(filepath);
