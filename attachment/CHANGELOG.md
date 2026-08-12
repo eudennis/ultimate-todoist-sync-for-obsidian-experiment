@@ -8,6 +8,19 @@
 
 ## 2026-08-12
 
+### 0.7.2
+
+- Resolved the ~103 issues surfaced by the automated scorecard on the plugin's community.obsidian.md page:
+  - Fixed ~80 unhandled/mismatched promise-handling bugs across the sync engine and settings UI (`main.ts`, `syncModule.ts`, `settings.ts`, `cacheOperation.ts`, `fileOperation.ts`, `modal.ts`, `taskParser.ts`). Several were real ordering bugs, not just lint nits — e.g. a "backup saved" notice that could fire before the backup file write finished, and task close/reopen/section-move cache updates that weren't actually sequenced after their Todoist API call.
+  - Popout-window API compliance: `window.setTimeout()` instead of bare `setTimeout()`, `activeDocument` instead of bare `document`.
+  - Removed `!important` from the tid-opacity CSS rules in favor of higher-specificity selectors.
+  - Removed unnecessary TypeScript type assertions, which surfaced a real gap: the cached section type was missing `project_id` even though other code already read it.
+  - Stubbed out an unused file-upload code path pulled in by `@doist/todoist-sdk` that was tripping a "direct filesystem access" flag on the built bundle — the plugin never calls any upload/attachment method.
+  - Removed the stale, unused `pnpm-lock.yaml` (npm is the project's actual package manager).
+  - Added a GitHub Actions release workflow (`.github/workflows/release.yml`) that builds, attests provenance for the release assets, and uploads exactly `main.js`/`manifest.json`/`styles.css` — there was previously no automated release process.
+- Added `eslint-plugin-obsidianmd` (the official Obsidian plugin-guidelines linter) with type-checked linting (`npm run lint`), so these categories of issues are now caught locally before release.
+- Synced `package.json`'s version field with `manifest.json` (it had drifted to an unrelated `1.0.2`).
+
 ### 0.7.1
 
 - Added a slider to let the user select the Todoist ID comment opacity
