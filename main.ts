@@ -59,7 +59,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 		}
 
 		function startCounter() {
-			setTimeout(() => {
+			window.setTimeout(() => {
 				runAfter60Seconds();
 			}, 60000); // 60 seconds
 		}
@@ -70,7 +70,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 		}
 
 		//key event monitoring, judging line break and deletion
-		this.registerDomEvent(document, "keyup", async (evt: KeyboardEvent) => {
+		this.registerDomEvent(activeDocument, "keyup", async (evt: KeyboardEvent) => {
 			if (!this.settings.apiInitialized) {
 				return;
 			}
@@ -92,7 +92,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 					return;
 				}
 				// TODO for some reason, in some cases, without this wait, the task is deleted just after the task is created. Still have not found why
-				await new Promise((resolve) => setTimeout(resolve, 10000));
+				await new Promise((resolve) => window.setTimeout(resolve, 10000));
 				if (!this.checkModuleClass()) {
 					return;
 				}
@@ -164,7 +164,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, "click", async (evt: MouseEvent) => {
+		this.registerDomEvent(activeDocument, "click", async (evt: MouseEvent) => {
 			if (!this.settings.apiInitialized) {
 				return;
 			}
@@ -191,7 +191,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 				"editor-change",
 				async (editor, view: MarkdownView) => {
 					// TODO for some reason, in some cases, without this wait, the task is deleted just after the task is created. Still didn't find why
-					await new Promise((resolve) => setTimeout(resolve, 10000));
+					await new Promise((resolve) => window.setTimeout(resolve, 10000));
 					try {
 						if (!this.settings.apiInitialized) {
 							return;
@@ -371,12 +371,12 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 	}
 
 	async onunload() {
-		document.body.style.removeProperty("--ats-tid-opacity");
+		activeDocument.body.style.removeProperty("--ats-tid-opacity");
 		await this.saveSettings();
 	}
 
 	applyTidOpacity() {
-		document.body.style.setProperty(
+		activeDocument.body.style.setProperty(
 			"--ats-tid-opacity",
 			`${this.settings.tidOpacity}%`,
 		);
@@ -414,12 +414,13 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 	private normalizeSettingsForCompare(settings: AnotherSimpleTodoistSyncSettings): string {
 		try {
 			const copy = JSON.parse(JSON.stringify(settings));
+			const byId = (a: { id: string }, b: { id: string }) => (a.id > b.id ? 1 : -1);
 			if (copy.todoistTasksData) {
 				if (Array.isArray(copy.todoistTasksData.tasks)) {
-					copy.todoistTasksData.tasks.sort((a: any, b: any) => (a.id > b.id ? 1 : -1));
+					copy.todoistTasksData.tasks.sort(byId);
 				}
 				if (Array.isArray(copy.todoistTasksData.projects?.results)) {
-					copy.todoistTasksData.projects.results.sort((a: any, b: any) => (a.id > b.id ? 1 : -1));
+					copy.todoistTasksData.projects.results.sort(byId);
 				}
 			}
 			return JSON.stringify(copy);
@@ -652,7 +653,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 			}
 			const defaultProjectName =
 				await this.cacheOperation?.getDefaultProjectNameForFilepath(
-					filepath as string,
+					filepath,
 				);
 			if (defaultProjectName === undefined) {
 				return;
@@ -721,7 +722,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 	async checkSyncLock() {
 		let checkCount = 0;
 		while (this.syncLock === true && checkCount < 10) {
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			await new Promise((resolve) => window.setTimeout(resolve, 1000));
 			checkCount++;
 		}
 		if (this.syncLock === true) {

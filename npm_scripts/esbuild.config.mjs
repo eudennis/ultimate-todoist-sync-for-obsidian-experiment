@@ -1,6 +1,6 @@
 import esbuild from "esbuild";
 import process from "process";
-import builtins from "builtin-modules";
+import { builtinModules } from "node:module";
 
 const banner =
 `/*
@@ -10,6 +10,12 @@ if you want to view the source, please visit the github repository of this plugi
 `;
 
 const prod = (process.argv[2] === "production");
+
+// Dependencies (e.g. undici, pulled in via @doist/todoist-sdk) require some
+// builtins via the "node:"-prefixed specifier, including experimental ones
+// (e.g. "node:sqlite") that module.builtinModules doesn't list. The "node:*"
+// wildcard externalizes all of them, in addition to the bare specifiers.
+const nodeBuiltins = [...builtinModules, "node:*"];
 
 const context = await esbuild.context({
 	banner: {
@@ -31,7 +37,7 @@ const context = await esbuild.context({
 		"@lezer/common",
 		"@lezer/highlight",
 		"@lezer/lr",
-		...builtins],
+		...nodeBuiltins],
 	format: "cjs",
 	target: "es2018",
 	logLevel: "info",
