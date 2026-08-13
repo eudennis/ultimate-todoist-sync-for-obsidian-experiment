@@ -332,7 +332,7 @@ export class FileOperation {
 						evt.extra_data.due_date,
 					) || "";
 				const lineTaskTime =
-					this.plugin.taskParser?.getDueTimeFromLineText(line) || "";
+					this.plugin.taskParser?.getDueTimeFromLineText(line, filepath, i) || "";
 
 				// If the task on the file doesn't have time, doesn't need to find the new time from the cache
 				let newTaskTime = "";
