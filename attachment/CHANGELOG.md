@@ -2,14 +2,13 @@
 
 ## 2026-08-13
 
-### 0.7.2
+### 0.7.3
 
-- Small fix on style.css to address #59 and #35
-
-## 2026-08-12
-
-### 0.7.2
-
+- Fixed moving a task to a different section throwing a 400 error — `moveTaskToAnotherSection()` was posting to the generic task-update endpoint instead of Todoist's dedicated `tasks/{id}/move` endpoint.
+- Fixed task deletions no longer syncing to Todoist — a malformed regex in `checkForTasksWithoutLink()` never matched the plugin's own `%%[tid:: ...]%%` link format, so the deletion guard silently short-circuited on any file with a synced task.
+- Fixed an "At least one update is required" error thrown right after a section-only move — the move already happened via its own endpoint, but a follow-up `updateTask()` call was still firing with an empty payload.
+- Added the originating file name and line number to console warnings/errors raised while parsing a task line (bad due date format, missing project, duration over 24h, malformed deadline, stale task id, etc.).
+- `npm run build-local` now regenerates `another-simple-todoist-sync.zip` in `LocalBuild/` on every run instead of leaving it stale.
 - Resolved the ~103 issues surfaced by the automated scorecard on the plugin's community.obsidian.md page:
   - Fixed ~80 unhandled/mismatched promise-handling bugs across the sync engine and settings UI (`main.ts`, `syncModule.ts`, `settings.ts`, `cacheOperation.ts`, `fileOperation.ts`, `modal.ts`, `taskParser.ts`). Several were real ordering bugs, not just lint nits — e.g. a "backup saved" notice that could fire before the backup file write finished, and task close/reopen/section-move cache updates that weren't actually sequenced after their Todoist API call.
   - Popout-window API compliance: `window.setTimeout()` instead of bare `setTimeout()`, `activeDocument` instead of bare `document`.
@@ -20,6 +19,12 @@
   - Added a GitHub Actions release workflow (`.github/workflows/release.yml`) that builds, attests provenance for the release assets, and uploads exactly `main.js`/`manifest.json`/`styles.css` — there was previously no automated release process.
 - Added `eslint-plugin-obsidianmd` (the official Obsidian plugin-guidelines linter) with type-checked linting (`npm run lint`), so these categories of issues are now caught locally before release.
 - Synced `package.json`'s version field with `manifest.json` (it had drifted to an unrelated `1.0.2`).
+
+### 0.7.2
+
+- Small fix on style.css to address #59 and #35
+
+## 2026-08-12
 
 ### 0.7.1
 
