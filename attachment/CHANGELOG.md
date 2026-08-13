@@ -1,5 +1,11 @@
 ## CHANGELOG
 
+## 2026-08-13
+
+### 0.7.2
+
+- Small fix on style.css to address #59 and #35
+
 ## 2026-08-12
 
 ### 0.7.1
