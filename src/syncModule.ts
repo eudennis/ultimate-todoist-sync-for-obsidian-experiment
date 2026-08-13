@@ -18,7 +18,7 @@ export class TodoistSync {
 		const currentFileValue = view?.data;
 		const regexTags = /#tdsync/gm;
 		const regexLinks =
-			/%% \[tid::\(\d+\)\[(?:https:\/\/app.todoist.com\/app\/task\/[a-zA-Z0-9]+|todoist:\/\/task\?id=[a-zA-Z0-9]+)\]%%/g;
+			/%%\[tid::\s\[[a-zA-Z0-9]+\]\((?:https:\/\/app\.todoist\.com\/app\/task\/[a-zA-Z0-9]+|todoist:\/\/task\?id=[a-zA-Z0-9]+)\)\]%%/g;
 
 		const countTags = currentFileValue?.match(regexTags);
 		const countLinks = currentFileValue?.match(regexLinks);
@@ -469,7 +469,7 @@ export class TodoistSync {
 			if (isOldTaskId) {
 				if (this.plugin.settings.debugMode) {
 					console.warn(
-						`Task id is using old format (${lineTask.id}), it will ignore this task and not look for any updates.`,
+						`Task id is using old format (${lineTask.id}), it will ignore this task and not look for any updates. (File ${filepath} on line ${lineNumber})`,
 					);
 				}
 				return;
@@ -514,7 +514,11 @@ export class TodoistSync {
 			// let dueDateTimeModified = false;
 			let dueTimeModified = false;
 
-			const hasDueDate = this.plugin.taskParser?.hasDueDate(lineText);
+			const hasDueDate = this.plugin.taskParser?.hasDueDate(
+				lineText,
+				filepath,
+				lineNumber,
+			);
 			const hasDueTime = this.plugin.taskParser?.hasDueTime(lineText);
 
 			if (hasDueDate && !hasDueTime) {
@@ -744,23 +748,11 @@ export class TodoistSync {
 					);
 				}
 
-				if (
-					contentChanged ||
-					tagsChanged ||
-					dueDateChanged ||
-					dueDateTimeChanged ||
-					dueTimeChanged ||
-					projectChanged ||
-					parentIdChanged ||
-					priorityChanged ||
-					durationChanged ||
-					sectionChanged ||
-					deadlineChanged
-				) {
+				if (Object.keys(updatedContent).length > 0) {
 					if (this.plugin.cacheOperation?.checkTaskIdIsOld(lineTask.id)) {
 						if (this.plugin.settings.debugMode) {
 							console.error(
-								`Task id is using old format (${lineTask.id}), it will not trigger any update.`,
+								`Task id is using old format (${lineTask.id}), it will not trigger any update. (File ${filepath} on line ${lineNumber})`,
 							);
 						}
 						return;
