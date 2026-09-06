@@ -12,6 +12,14 @@ export class TaskParser {
 		this.plugin = plugin;
 	}
 
+	// Builds a " (File x.md on line y)" suffix for warnings/errors tied to a specific task line
+	private locationSuffix(filepath?: string, lineNumber?: number): string {
+		if (!filepath || lineNumber === undefined) {
+			return "";
+		}
+		return ` (File ${filepath} on line ${lineNumber})`;
+	}
+
 	//convert line text to a task object
 	async convertTextToTodoistTaskObject(
 		lineText: string,
@@ -51,29 +59,29 @@ export class TaskParser {
 		}
 
 		let dueDateVsDatetime = "";
-		if(this.hasCalendarEmoji(textWithoutIndentation) && !this.hasDueDate(textWithoutIndentation)){
-			console.warn("Task has calendar emoji trigger, but due date seems to be missing. Please provide a valid due date.");
+		if(this.hasCalendarEmoji(textWithoutIndentation) && !this.hasDueDate(textWithoutIndentation, filepath, lineNumber)){
+			console.warn(`Task has calendar emoji trigger, but due date seems to be missing. Please provide a valid due date.${this.locationSuffix(filepath, lineNumber)}`);
 		}
 		if (
 			this.hasDueDateTime(textWithoutIndentation) &&
-			this.hasDueDate(textWithoutIndentation)
+			this.hasDueDate(textWithoutIndentation, filepath, lineNumber)
 		) {
 			dueDateVsDatetime = "datetime";
 		}
 		if (
-			this.hasDueDate(textWithoutIndentation) &&
+			this.hasDueDate(textWithoutIndentation, filepath, lineNumber) &&
 			!this.hasDueDateTime(textWithoutIndentation)
 		) {
 			dueDateVsDatetime = "date";
 		}
 		if (
-			!this.hasDueDate(textWithoutIndentation) &&
+			!this.hasDueDate(textWithoutIndentation, filepath, lineNumber) &&
 			this.hasDueTime(textWithoutIndentation)
 		) {
 			dueDateVsDatetime = "time";
 		}
-		if(!this.hasDueDate(textWithoutIndentation) && this.hasDueTime(textWithoutIndentation) && this.hasCalendarEmoji(textWithoutIndentation)){
-			console.warn("Task has calendar emoji trigger and time, but due date seems to be missing. Please provide a valid due date.");
+		if(!this.hasDueDate(textWithoutIndentation, filepath, lineNumber) && this.hasDueTime(textWithoutIndentation) && this.hasCalendarEmoji(textWithoutIndentation)){
+			console.warn(`Task has calendar emoji trigger and time, but due date seems to be missing. Please provide a valid due date.${this.locationSuffix(filepath, lineNumber)}`);
 			dueDateVsDatetime = "";
 		}
 
@@ -82,15 +90,15 @@ export class TaskParser {
 		let dueTime = "";
 		if (dueDateVsDatetime === "datetime") {
 			dueDate = this.getDueDateFromLineText(textWithoutIndentation) ?? "";
-			dueTime = this.getDueTimeFromLineText(textWithoutIndentation) ?? "";
-			dueDate = this.convertDueDateToProperFormat(dueDate);
+			dueTime = this.getDueTimeFromLineText(textWithoutIndentation, filepath, lineNumber) ?? "";
+			dueDate = this.convertDueDateToProperFormat(dueDate, filepath, lineNumber);
 			dueDatetime = `${dueDate}T${dueTime}:00`;
 		}
 		if (dueDateVsDatetime === "time") {
-			dueTime = this.getDueTimeFromLineText(textWithoutIndentation) ?? "";
+			dueTime = this.getDueTimeFromLineText(textWithoutIndentation, filepath, lineNumber) ?? "";
 			const currentDate = new Date().toISOString().split("T")[0];
 			dueDatetime = `${currentDate}T${dueTime}:00`;
-			this.plugin.fileOperation?.addCurrentDateToTask(
+			await this.plugin.fileOperation?.addCurrentDateToTask(
 				lineNumber ?? 0,
 				filepath,
 				currentDate,
@@ -99,7 +107,7 @@ export class TaskParser {
 		}
 		if (dueDateVsDatetime === "date") {
 			dueDate = this.getDueDateFromLineText(textWithoutIndentation) ?? "";
-			dueDate = this.convertDueDateToProperFormat(dueDate);
+			dueDate = this.convertDueDateToProperFormat(dueDate, filepath, lineNumber);
 		}
 
 		const labels = this.getAllTagsFromLineText(textWithoutIndentation);
@@ -116,7 +124,7 @@ export class TaskParser {
 		let durationTime = 0;
 		if (hasDuration) {
 			durationTime = Number(
-				this.getTaskDurationFromLineText(textWithoutIndentation),
+				this.getTaskDurationFromLineText(textWithoutIndentation, filepath, lineNumber),
 			);
 		}
 
@@ -128,12 +136,12 @@ export class TaskParser {
 		}
 
 		let projectId = this.plugin.cacheOperation?.getDefaultProjectIdForFilepath(
-			filepath as string,
+			filepath,
 		);
 		if (!projectId) {
-			console.error("projectId was not found");
+			console.error(`projectId was not found.${this.locationSuffix(filepath, lineNumber)}`);
 			new Notice(
-				"ProjectId was not found. Please select a default project on Settings",
+				"ProjectId was not found. Please select a default project on settings",
 			);
 		}
 
@@ -162,10 +170,10 @@ export class TaskParser {
 			}
 		}
 		if (!projectId) {
-			console.error("projectId was not found");
+			console.error(`projectId was not found.${this.locationSuffix(filepath, lineNumber)}`);
 		}
 		if (!project_name) {
-			console.error("project_name was not found");
+			console.error(`project_name was not found.${this.locationSuffix(filepath, lineNumber)}`);
 		}
 
 		// If the task has section, it tries to retrieve from cache, if don't find, create a new one and store it on cache.
@@ -232,7 +240,7 @@ export class TaskParser {
 		const todoist_id = this.getTodoistIdFromLineText(textWithoutIndentation);
 		const priority = this.getTaskPriority(textWithoutIndentation);
 
-		const deadlineDate = this.getDeadlineDateFromLineText(textWithoutIndentation);
+		const deadlineDate = this.getDeadlineDateFromLineText(textWithoutIndentation, filepath, lineNumber);
 
 		if (filepath) {
 			const url = encodeURI(
@@ -263,18 +271,18 @@ export class TaskParser {
 		return todoistTask;
 	}
 
-	convertDueDateToProperFormat(text:string){
+	convertDueDateToProperFormat(text:string, filepath?: string, lineNumber?: number){
 		const regexCorrectFormat = /(\d{4})-(\d{2})-(\d{2})/;
 		const regex = /(\d{2,4})-(\d{1,2})-(\d{1,2})/;
-		const hasCorrectFormat = regexCorrectFormat.test(text) 
+		const hasCorrectFormat = regexCorrectFormat.test(text)
 		if(hasCorrectFormat) {
 			return text
 		}
 
 		const findAllGroups = text.match(regex)
-		
+
 		if (findAllGroups === null) {
-			console.error("Due date format is incorrect, task won't be created. Expected format: YYYY-MM-DD.");
+			console.error(`Due date format is incorrect, task won't be created. Expected format: YYYY-MM-DD.${this.locationSuffix(filepath, lineNumber)}`);
 			return ""
 		}
 
@@ -357,12 +365,12 @@ export class TaskParser {
 	}
 
 	//   Return true or false if the text has a due date
-	hasDueDate(text: string) {
+	hasDueDate(text: string, filepath?: string, lineNumber?: number) {
 		const regex_test = new RegExp(
 			`(${this.keywords_function("DUE_DATE")})\\s?(\\d{2}(?:\\d{2})?)-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\\d|3[01])`,
 		);
 		if(this.hasCalendarEmoji(text) && !regex_test.test(text)){
-			console.warn("Task has due date trigger, but date format seems to be wrong. Please provide a valid YYYY-MM-DD format.");
+			console.warn(`Task has due date trigger, but date format seems to be wrong. Please provide a valid YYYY-MM-DD format.${this.locationSuffix(filepath, lineNumber)}`);
 		}
 
 		return regex_test.test(text);
@@ -415,7 +423,7 @@ export class TaskParser {
 
 
 	// Get the task duration from the text
-	getTaskDurationFromLineText(text: string) {
+	getTaskDurationFromLineText(text: string, filepath?: string, lineNumber?: number) {
 		const regex_text = new RegExp(
 			`(?:${this.keywords_function("DURATION")})\\d+min`,
 		);
@@ -427,7 +435,7 @@ export class TaskParser {
 		}
 		// The duration is more than 24 hours. It will be ignored.
 		if (extract_duration_number && extract_duration_number > 1440) {
-			console.error("Duration above 24 hours is ignored.");
+			console.error(`Duration above 24 hours is ignored.${this.locationSuffix(filepath, lineNumber)}`);
 			return null;
 		}
 		return extract_duration_number;
@@ -443,7 +451,7 @@ export class TaskParser {
 	}
 
 	// Get the due time from the text
-	getDueTimeFromLineText(text: string) {
+	getDueTimeFromLineText(text: string, filepath?: string, lineNumber?: number) {
 		const regex_search_for_due_time = new RegExp(
 			`(?:${this.keywords_function("DUE_TIME")})\\s?(\\d{1,2}:\\d{2})`,
 		);
@@ -451,7 +459,7 @@ export class TaskParser {
 		const current_time = regex_search_for_due_time.exec(text);
 		if (current_time === null) {
 			if (this.plugin.settings.debugMode) {
-				console.error("Due time not found in the line text");
+				console.error(`Due time not found in the line text.${this.locationSuffix(filepath, lineNumber)}`);
 			}
 			return "";
 		}
@@ -1020,13 +1028,14 @@ export class TaskParser {
 	}
 
 	// Extract deadline_date from {{MM-DD}} and always return it as YYYY-MM-DD
-	getDeadlineDateFromLineText(text: string): string | null {
+	getDeadlineDateFromLineText(text: string, filepath?: string, lineNumber?: number): string | null {
 		const match = text.match(/\{\{(?:(\d{4}|\d{2})-)?(1[0-2]|0?[1-9])-(3[01]|[12]\d|0?[1-9])\}\}/);
 
 		const hasBrackets = text.match(/\{\{.*?\}\}/);
 		if (!match && hasBrackets) {
-			console.warn(`No valid date found within brackets for: ${text}`);
-			console.warn("Date format expected for the deadline should be YYYY-MM-DD or MM-DD.");
+			const suffix = this.locationSuffix(filepath, lineNumber);
+			console.warn(`No valid date found within brackets for: ${text}${suffix}`);
+			console.warn(`Date format expected for the deadline should be YYYY-MM-DD or MM-DD.${suffix}`);
 			new Notice("Deadline date format is incorrect, task will be created without deadline.");
 		}
 

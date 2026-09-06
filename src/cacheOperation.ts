@@ -61,12 +61,6 @@ export interface FileMetadata {
 	defaultProjectName?: string;
 }
 
-interface TodoistSection {
-	id: string;
-	name: string;
-	project_id: string;
-}
-
 export class CacheOperation {
 	app: App;
 	plugin: AnotherSimpleTodoistSync;
@@ -133,7 +127,7 @@ export class CacheOperation {
 	//delete filepath from filemetadata
 	async deleteFilepathFromMetadata(filepath: string) {
 		Reflect.deleteProperty(this.plugin.settings.fileMetadata, filepath);
-		this.plugin.saveSettings();
+		await this.plugin.saveSettings();
 	}
 
 	//Check errors in filemetadata where the filepath is incorrect.
@@ -166,7 +160,7 @@ export class CacheOperation {
 				if (searchResult) {
 					await this.updateRenamedFilePath(filepath, searchResult);
 				}
-				this.plugin.saveSettings();
+				await this.plugin.saveSettings();
 			}
 		}
 	}
@@ -336,7 +330,7 @@ export class CacheOperation {
 		try {
 			const savedTasks = this.plugin.settings.todoistTasksData.tasks;
 			const savedTask = savedTasks.find((t: Task) => t.id === taskId);
-			return savedTask as Task | undefined;
+			return savedTask;
 		} catch (error) {
 			console.error(`Error finding task from Cache: ${error}`);
 			return undefined;
@@ -390,7 +384,7 @@ export class CacheOperation {
 				name: name,
 				id: sectionId,
 				project_id: project_id,
-			} as TodoistSection);
+			});
 		} catch (error) {
 			console.error(`Error appending section to Cache: ${error}`);
 		}
@@ -639,7 +633,7 @@ export class CacheOperation {
 
 	async updateRenamedFilePath(oldpath: string, newpath: string) {
 		try {
-			const savedTask = await this.loadTasksFromCache();
+			const savedTask = this.loadTasksFromCache();
 			//console.log(savedTask)
 			const newTasks = savedTask.map((obj: Task) => {
 				if (obj.path === oldpath) {
@@ -648,7 +642,7 @@ export class CacheOperation {
 				return obj;
 			});
 			//console.log(newTasks)
-			await this.saveTasksToCache(newTasks);
+			this.saveTasksToCache(newTasks);
 
 			//update filepath
 			const fileMetadata = this.plugin.settings.fileMetadata;

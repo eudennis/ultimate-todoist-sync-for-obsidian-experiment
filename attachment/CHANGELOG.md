@@ -1,6 +1,26 @@
 ## CHANGELOG
 
-## 2026-08-13
+## 2026-09-06
+
+### 0.8.0
+
+- Fixed moving a task to a different section throwing a 400 error — `moveTaskToAnotherSection()` was posting to the generic task-update endpoint instead of Todoist's dedicated `tasks/{id}/move` endpoint.
+- Fixed task deletions no longer syncing to Todoist — a malformed regex in `checkForTasksWithoutLink()` never matched the plugin's own `%%[tid:: ...]%%` link format, so the deletion guard silently short-circuited on any file with a synced task.
+- Fixed an "At least one update is required" error thrown right after a section-only move — the move already happened via its own endpoint, but a follow-up `updateTask()` call was still firing with an empty payload.
+- Added the originating file name and line number to console warnings/errors raised while parsing a task line (bad due date format, missing project, duration over 24h, malformed deadline, stale task id, etc.).
+- `npm run build-local` now regenerates `another-simple-todoist-sync.zip` in `LocalBuild/` on every run instead of leaving it stale.
+- Resolved the ~103 issues surfaced by the automated scorecard on the plugin's community.obsidian.md page:
+    - Fixed ~80 unhandled/mismatched promise-handling bugs across the sync engine and settings UI (`main.ts`, `syncModule.ts`, `settings.ts`, `cacheOperation.ts`, `fileOperation.ts`, `modal.ts`, `taskParser.ts`). Several were real ordering bugs, not just lint nits — e.g. a "backup saved" notice that could fire before the backup file write finished, and task close/reopen/section-move cache updates that weren't actually sequenced after their Todoist API call.
+    - Popout-window API compliance: `window.setTimeout()` instead of bare `setTimeout()`, `activeDocument` instead of bare `document`.
+    - Removed `!important` from the tid-opacity CSS rules in favor of higher-specificity selectors.
+    - Removed unnecessary TypeScript type assertions, which surfaced a real gap: the cached section type was missing `project_id` even though other code already read it.
+    - Stubbed out an unused file-upload code path pulled in by `@doist/todoist-sdk` that was tripping a "direct filesystem access" flag on the built bundle — the plugin never calls any upload/attachment method.
+    - Removed the stale, unused `pnpm-lock.yaml` (npm is the project's actual package manager).
+    - Added a GitHub Actions release workflow (`.github/workflows/release.yml`) that builds, attests provenance for the release assets, and uploads exactly `main.js`/`manifest.json`/`styles.css` — there was previously no automated release process.
+- Added `eslint-plugin-obsidianmd` (the official Obsidian plugin-guidelines linter) with type-checked linting (`npm run lint`), so these categories of issues are now caught locally before release.
+    - Fixed the remaining 48 `ui/sentence-case` findings across settings labels, command names, buttons, and notices, extending the rule's brand/acronym lists (rather than replacing its defaults) to keep recognizing "Todoist", "Obsidian", "API", "URI", etc.
+    - Fixed the "Import task" and "Set default project" modal titles reading "Another Todoist Sync" — missing "Simple" — inconsistent with the plugin's actual name everywhere else.
+- Synced `package.json`'s version field with `manifest.json` (it had drifted to an unrelated `1.0.2`).
 
 ### 0.7.2
 

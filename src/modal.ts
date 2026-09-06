@@ -20,17 +20,17 @@ export class SetDefaultProjectInTheFilepathModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 		contentEl.createEl("h5", {
-			text: "Another Todoist Sync: Set default project for the current file.",
+			text: "Another Simple Todoist Sync: Set default project for the current file.",
 		});
 
 		this.defaultProjectId =
-			(await this.plugin.cacheOperation?.getDefaultProjectIdForFilepath(
+			this.plugin.cacheOperation?.getDefaultProjectIdForFilepath(
 				this.filepath,
-			)) ?? "";
+			) ?? "";
 		this.defaultProjectName =
-			(await this.plugin.cacheOperation?.getProjectNameByIdFromCache(
+			this.plugin.cacheOperation?.getProjectNameByIdFromCache(
 				this.defaultProjectId,
-			)) ?? "";
+			) ?? "";
 		const myProjectsOptions: Record<string, string> | undefined =
 			this.plugin.settings.todoistTasksData?.projects?.results?.reduce(
 				(obj: Record<string, string>, item: TodoistProject) => {
@@ -47,13 +47,13 @@ export class SetDefaultProjectInTheFilepathModal extends Modal {
 				component
 					.addOption(this.defaultProjectId, this.defaultProjectName ?? "")
 					.addOptions(myProjectsOptions)
-					.onChange((value) => {
+					.onChange(async (value) => {
 						this.plugin.cacheOperation?.setDefaultProjectIdForFilepath(
 							this.filepath,
 							value,
 							this.defaultProjectName,
 						);
-						this.plugin.setStatusBarText();
+						await this.plugin.setStatusBarText();
 						this.close();
 					}),
 			);

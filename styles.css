@@ -1,6 +1,6 @@
-.dataview.inline-field {
-    opacity: var(--ats-tid-opacity, 30%)!important;
+.dataview.inline-field.dataview.inline-field {
+    opacity: var(--ats-tid-opacity, 30%);
 }
-.dataview.inline-field:hover {
-    opacity: 100%!important;
+.dataview.inline-field.dataview.inline-field:hover {
+    opacity: 100%;
 }

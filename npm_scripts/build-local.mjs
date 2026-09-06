@@ -1,4 +1,5 @@
-import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync } from "fs";
+import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync, rmSync } from "fs";
+import { execFileSync } from "child_process";
 
 const PLUGIN_ID = "another-simple-todoist-sync";
 const LOCAL_DIR = `LocalBuild/${PLUGIN_ID}`;
@@ -32,4 +33,19 @@ if (existsSync("styles.css")) {
 	copyFileSync("styles.css", `${LOCAL_DIR}/styles.css`);
 }
 
-console.log(`Built ${newVersion} → ${LOCAL_DIR}/`);
+// Repackage the zip so it always matches manifest.json, main.js, and styles.css above
+const zipName = `${PLUGIN_ID}.zip`;
+const zipPath = `${LOCAL_DIR}/${zipName}`;
+rmSync(zipPath, { force: true });
+const zipFiles = ["manifest.json", "main.js"];
+if (existsSync(`${LOCAL_DIR}/styles.css`)) {
+	zipFiles.push("styles.css");
+}
+try {
+	execFileSync("zip", ["-q", zipName, ...zipFiles], { cwd: LOCAL_DIR });
+} catch (error) {
+	console.error(`Failed to create ${zipPath}: ${error.message}`);
+	throw error;
+}
+
+console.log(`Built ${newVersion} → ${LOCAL_DIR}/ (incl. ${zipName})`);

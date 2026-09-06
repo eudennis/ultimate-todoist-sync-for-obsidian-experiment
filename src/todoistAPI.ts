@@ -476,7 +476,7 @@ export class TodoistNewAPI {
 
 		try {
 			const response = await requestUrl({
-				url: `https://api.todoist.com/api/v1/tasks/${taskId}`,
+				url: `https://todoist.com/api/v1/tasks/${taskId}/move`,
 				method: "POST",
 				headers: {
 					Authorization: `Bearer ${token}`,

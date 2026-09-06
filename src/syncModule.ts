@@ -18,7 +18,7 @@ export class TodoistSync {
 		const currentFileValue = view?.data;
 		const regexTags = /#tdsync/gm;
 		const regexLinks =
-			/%% \[tid::\(\d+\)\[(?:https:\/\/app.todoist.com\/app\/task\/[a-zA-Z0-9]+|todoist:\/\/task\?id=[a-zA-Z0-9]+)\]%%/g;
+			/%%\[tid::\s\[[a-zA-Z0-9]+\]\((?:https:\/\/app\.todoist\.com\/app\/task\/[a-zA-Z0-9]+|todoist:\/\/task\?id=[a-zA-Z0-9]+)\)\]%%/g;
 
 		const countTags = currentFileValue?.match(regexTags);
 		const countLinks = currentFileValue?.match(regexLinks);
@@ -116,7 +116,7 @@ export class TodoistSync {
 			(id): id is string => id !== undefined,
 		);
 		this.plugin.cacheOperation?.deleteTaskFromCacheByIDs(validDeletedTaskIds);
-		this.plugin.saveSettings();
+		await this.plugin.saveSettings();
 		// Update newFrontMatter_todoistTasks array
 		// Disable automatic merging
 		const newFrontMatter_todoistTasks = frontMatter_todoistTasks.filter(
@@ -199,9 +199,7 @@ export class TodoistSync {
 					`New task "${newTask.content}" added. Task ID: ${newTask.id}`,
 				);
 				// Write new task to cache
-				this.plugin.cacheOperation?.appendTaskToCache(
-					newTask as unknown as Task,
-				);
+				this.plugin.cacheOperation?.appendTaskToCache(newTask);
 				this.plugin.cacheOperation?.appendPathToTaskInCache(
 					todoist_id,
 					filepath,
@@ -212,7 +210,7 @@ export class TodoistSync {
 					await this.plugin.todoistNewAPI?.closeTask(newTask.id);
 					this.plugin.cacheOperation?.closeTaskToCacheByID(todoist_id);
 				}
-				this.plugin.saveSettings();
+				await this.plugin.saveSettings();
 
 				// Append Todoist ID to the task line
 				const text_with_out_link = `${currentLineText}`;
@@ -367,9 +365,7 @@ export class TodoistSync {
 						`New task "${newTask.content}" added. Task ID: ${newTask.id}`,
 					);
 					// Write new task to cache
-					this.plugin.cacheOperation?.appendTaskToCache(
-						newTask as unknown as Task,
-					);
+					this.plugin.cacheOperation?.appendTaskToCache(newTask);
 					this.plugin.cacheOperation?.appendPathToTaskInCache(
 						todoist_id,
 						filepath,
@@ -380,7 +376,7 @@ export class TodoistSync {
 						await this.plugin.todoistNewAPI?.closeTask(newTask.id);
 						this.plugin.cacheOperation?.closeTaskToCacheByID(todoist_id ?? "");
 					}
-					this.plugin.saveSettings();
+					await this.plugin.saveSettings();
 
 					// Append Todoist ID to the task line
 					const text_with_out_link = `${line}`;
@@ -446,7 +442,7 @@ export class TodoistSync {
 			if (!metadata) {
 				await this.plugin.cacheOperation?.newEmptyFileMetadata(filepath);
 			}
-			this.plugin.saveSettings();
+			await this.plugin.saveSettings();
 		}
 
 		// Check task for modifications
@@ -473,7 +469,7 @@ export class TodoistSync {
 			if (isOldTaskId) {
 				if (this.plugin.settings.debugMode) {
 					console.warn(
-						`Task id is using old format (${lineTask.id}), it will ignore this task and not look for any updates.`,
+						`Task id is using old format (${lineTask.id}), it will ignore this task and not look for any updates. (File ${filepath} on line ${lineNumber})`,
 					);
 				}
 				return;
@@ -509,16 +505,20 @@ export class TodoistSync {
 				{ isCompleted: savedTask.isCompleted ?? false },
 			);
 
-			const deadlineModified = !(await this.plugin.taskParser?.taskDeadlineCompare(
+			const deadlineModified = !this.plugin.taskParser?.taskDeadlineCompare(
 				{ deadline_date: lineTask.deadline_date ?? "" },
 				{ deadline_date: savedTask.deadline?.date ?? "" },
-			));
+			);
 
 			let dueDateModified = false;
 			// let dueDateTimeModified = false;
 			let dueTimeModified = false;
 
-			const hasDueDate = this.plugin.taskParser?.hasDueDate(lineText);
+			const hasDueDate = this.plugin.taskParser?.hasDueDate(
+				lineText,
+				filepath,
+				lineNumber,
+			);
 			const hasDueTime = this.plugin.taskParser?.hasDueTime(lineText);
 
 			if (hasDueDate && !hasDueTime) {
@@ -685,7 +685,7 @@ export class TodoistSync {
 
 				// If the section was modified, it moves the task to the new section and update the cache
 				if (sectionModified) {
-					this.plugin.todoistNewAPI?.moveTaskToAnotherSection(
+					await this.plugin.todoistNewAPI?.moveTaskToAnotherSection(
 						lineTask.id,
 						lineTask.section_id ?? "",
 					);
@@ -748,23 +748,11 @@ export class TodoistSync {
 					);
 				}
 
-				if (
-					contentChanged ||
-					tagsChanged ||
-					dueDateChanged ||
-					dueDateTimeChanged ||
-					dueTimeChanged ||
-					projectChanged ||
-					parentIdChanged ||
-					priorityChanged ||
-					durationChanged ||
-					sectionChanged ||
-					deadlineChanged
-				) {
+				if (Object.keys(updatedContent).length > 0) {
 					if (this.plugin.cacheOperation?.checkTaskIdIsOld(lineTask.id)) {
 						if (this.plugin.settings.debugMode) {
 							console.error(
-								`Task id is using old format (${lineTask.id}), it will not trigger any update.`,
+								`Task id is using old format (${lineTask.id}), it will not trigger any update. (File ${filepath} on line ${lineNumber})`,
 							);
 						}
 						return;
@@ -792,10 +780,10 @@ export class TodoistSync {
 
 				if (statusModified) {
 					if (lineTask.isCompleted === true) {
-						this.plugin.todoistNewAPI?.closeTask(lineTask.id);
+						await this.plugin.todoistNewAPI?.closeTask(lineTask.id);
 						this.plugin.cacheOperation?.closeTaskToCacheByID(lineTask.id);
 					} else {
-						this.plugin.todoistNewAPI?.openTask(lineTask.id);
+						await this.plugin.todoistNewAPI?.openTask(lineTask.id);
 						this.plugin.cacheOperation?.reopenTaskToCacheByID(lineTask.id);
 					}
 
@@ -815,7 +803,7 @@ export class TodoistSync {
 					sectionChanged ||
 					deadlineChanged
 				) {
-					this.plugin.saveSettings();
+					await this.plugin.saveSettings();
 					let message = `Task ${lineTask_todoist_id} is updated.`;
 
 					if (contentChanged) {
@@ -932,8 +920,8 @@ export class TodoistSync {
 		try {
 			await this.plugin.todoistNewAPI?.closeTask(taskId);
 			await this.plugin.fileOperation?.completeTaskInTheFile(taskId);
-			await this.plugin.cacheOperation?.closeTaskToCacheByID(taskId);
-			this.plugin.saveSettings();
+			this.plugin.cacheOperation?.closeTaskToCacheByID(taskId);
+			await this.plugin.saveSettings();
 			new Notice(`Task ${taskId} is closed.`);
 		} catch (error) {
 			console.error("Error closing task:", error);
@@ -946,8 +934,8 @@ export class TodoistSync {
 		try {
 			await this.plugin.todoistNewAPI?.openTask(taskId);
 			await this.plugin.fileOperation?.incompleteTaskInTheFile(taskId);
-			await this.plugin.cacheOperation?.reopenTaskToCacheByID(taskId);
-			this.plugin.saveSettings();
+			this.plugin.cacheOperation?.reopenTaskToCacheByID(taskId);
+			await this.plugin.saveSettings();
 			new Notice(`Task ${taskId} is reopened.`);
 		} catch (error) {
 			console.error("Error opening task:", error);
@@ -964,7 +952,7 @@ export class TodoistSync {
 		const deletedTaskIds = [];
 
 		for (const taskId of taskIds) {
-			const api = await this.plugin.todoistNewAPI?.initializeNewAPI();
+			const api = this.plugin.todoistNewAPI?.initializeNewAPI();
 			try {
 				const response = await api?.deleteTask(taskId);
 
@@ -984,8 +972,8 @@ export class TodoistSync {
 			return [];
 		}
 
-		await this.plugin.cacheOperation?.deleteTaskFromCacheByIDs(deletedTaskIds); // Update cache
-		this.plugin.saveSettings();
+		this.plugin.cacheOperation?.deleteTaskFromCacheByIDs(deletedTaskIds); // Update cache
+		await this.plugin.saveSettings();
 
 		return deletedTaskIds;
 	}
@@ -999,15 +987,15 @@ export class TodoistSync {
 			const processedEvents = [];
 			for (const e of unSynchronizedEvents) {
 				await this.plugin.fileOperation?.completeTaskInTheFile(e.object_id);
-				await this.plugin.cacheOperation?.closeTaskToCacheByID(e.object_id);
+				this.plugin.cacheOperation?.closeTaskToCacheByID(e.object_id);
 				new Notice(`Task ${e.object_id} is closed.`);
 				processedEvents.push(e);
 			}
 
 			// Save events to the local database."
 			//const allEvents = [...savedEvents, ...unSynchronizedEvents]
-			await this.plugin.cacheOperation?.appendEventsToCache(processedEvents);
-			this.plugin.saveSettings();
+			this.plugin.cacheOperation?.appendEventsToCache(processedEvents);
+			await this.plugin.saveSettings();
 		} catch (error) {
 			console.error("Error synchronizing task status: ", error);
 		}
@@ -1023,15 +1011,15 @@ export class TodoistSync {
 			for (const e of unSynchronizedEvents) {
 				//If you want to modify the code so that not_completeTaskInTheFile(e.object_id) is executed in sequence, you can change the Promise.allSettled() method to use a for...of loop to handle not_synchronized events. The specific steps are as follows:
 				await this.plugin.fileOperation?.incompleteTaskInTheFile(e.object_id);
-				await this.plugin.cacheOperation?.reopenTaskToCacheByID(e.object_id);
+				this.plugin.cacheOperation?.reopenTaskToCacheByID(e.object_id);
 				new Notice(`Task ${e.object_id} is reopened.`);
 				processedEvents.push(e);
 			}
 
 			// Merge new events into existing events and save to JSON
 			//const allEvents = [...savedEvents, ...unSynchronizedEvents]
-			await this.plugin.cacheOperation?.appendEventsToCache(processedEvents);
-			this.plugin.saveSettings();
+			this.plugin.cacheOperation?.appendEventsToCache(processedEvents);
+			await this.plugin.saveSettings();
 		} catch (error) {
 			console.error("Error synchronizing task status: ", error);
 		}
@@ -1069,7 +1057,7 @@ export class TodoistSync {
 			// Merge new events into existing events and save to JSON
 			//const allEvents = [...savedEvents, ...unSynchronizedEvents]
 			this.plugin.cacheOperation?.appendEventsToCache(processedEvents);
-			this.plugin.saveSettings();
+			await this.plugin.saveSettings();
 		} catch (error) {
 			console.error("Error syncing updated item", error);
 		}
@@ -1077,7 +1065,7 @@ export class TodoistSync {
 
 	async syncUpdatedTaskContentToObsidian(e: TodoistEvent) {
 		if (e.object_id && e.extra_data?.content) {
-			this.plugin.fileOperation?.syncUpdatedTaskContentToTheFile({
+			await this.plugin.fileOperation?.syncUpdatedTaskContentToTheFile({
 				object_id: e.object_id,
 				extra_data: {
 					content: e.extra_data.content as string,
@@ -1095,7 +1083,7 @@ export class TodoistSync {
 
 	async syncUpdatedTaskDueDateToObsidian(e: TodoistEvent) {
 		if (e.object_id && e.extra_data?.due_date) {
-			this.plugin.fileOperation?.syncUpdatedTaskDueDateToTheFile({
+			await this.plugin.fileOperation?.syncUpdatedTaskDueDateToTheFile({
 				object_id: e.object_id,
 				extra_data: {
 					due_date: e.extra_data.due_date as string,
@@ -1136,8 +1124,8 @@ export class TodoistSync {
 
 			// Merge new events into existing events and save to JSON
 
-			await this.plugin.cacheOperation?.appendEventsToCache(processedEvents);
-			this.plugin.saveSettings();
+			this.plugin.cacheOperation?.appendEventsToCache(processedEvents);
+			await this.plugin.saveSettings();
 		} catch (error) {
 			console.error("Error synchronizing task status: ", error);
 		}
@@ -1209,7 +1197,7 @@ export class TodoistSync {
 			);
 			if (not_synchronized_project_events?.length) {
 				await this.plugin.cacheOperation?.saveProjectsToCache();
-				await this.plugin.cacheOperation?.appendEventsToCache(
+				this.plugin.cacheOperation?.appendEventsToCache(
 					not_synchronized_project_events,
 				);
 			}
@@ -1227,7 +1215,7 @@ export class TodoistSync {
 
 			const name = `todoist-backup-${timeString}.json`;
 
-			this.app.vault.create(name, JSON.stringify(resources));
+			await this.app.vault.create(name, JSON.stringify(resources));
 			new Notice(`Todoist backup data is saved in the path ${name}`);
 		} catch (error) {
 			console.error("An error occurred while creating Todoist backup:", error);
