@@ -63,7 +63,7 @@ export class TodoistSync {
 				const liveContent = this.getOpenEditorContent(file_path);
 				currentFileValue = liveContent ?? (await this.app.vault.read(file));
 				if (this.plugin.settings.debugMode) {
-					console.debug(
+					console.log(
 						`deletedTaskCheck: reading ${filepath} from ${liveContent !== null ? "open editor buffer" : "vault.read()"}`,
 					);
 				}
@@ -105,7 +105,7 @@ export class TodoistSync {
 		);
 
 		if (this.plugin.settings.debugMode && missingTaskIds.length > 0) {
-			console.debug(
+			console.log(
 				`deletedTaskCheck: task id(s) [${missingTaskIds.join(", ")}] not found in ${filepath}, deleting from Todoist`,
 			);
 		}
@@ -124,7 +124,7 @@ export class TodoistSync {
 
 					if (response) {
 						if (this.plugin.settings.debugMode) {
-							console.debug(
+							console.log(
 								`deletedTaskCheck: task ${taskId} deleted from Todoist (missing from ${filepath})`,
 							);
 						}
@@ -227,7 +227,7 @@ export class TodoistSync {
 				}
 				newTask.path = filepath;
 				if (this.plugin.settings.debugMode) {
-					console.debug(
+					console.log(
 						`lineContentNewTaskCheck: created task ${todoist_id} "${newTask.content}" in ${filepath} on line ${line}`,
 					);
 				}
@@ -306,7 +306,7 @@ export class TodoistSync {
 				const liveContent = this.getOpenEditorContent(file_path);
 				currentFileValue = liveContent ?? (await this.app.vault.read(file));
 				if (this.plugin.settings.debugMode) {
-					console.debug(
+					console.log(
 						`fullTextNewTaskCheck: reading ${filepath} from ${liveContent !== null ? "open editor buffer" : "vault.read()"}`,
 					);
 				}
@@ -403,7 +403,7 @@ export class TodoistSync {
 					}
 
 					if (this.plugin.settings.debugMode) {
-						console.debug(
+						console.log(
 							`fullTextNewTaskCheck: created task ${todoist_id} "${newTask.content}" in ${filepath} on line ${i}`,
 						);
 					}
@@ -762,7 +762,7 @@ export class TodoistSync {
 						sectionChanged ||
 						deadlineChanged)
 				) {
-					console.debug(
+					console.log(
 						"Task change status: task id:",
 						lineTask.id,
 						" on line:",
@@ -805,7 +805,7 @@ export class TodoistSync {
 					}
 
 					if (this.plugin.settings.debugMode) {
-						console.debug(
+						console.log(
 							"The updates to be sent to Todoist and Cache are:",
 							updatedContent,
 						);
@@ -891,7 +891,7 @@ export class TodoistSync {
 
 					if (lineTask_todoist_id !== null) {
 						if (this.plugin.settings.debugMode) {
-							console.debug(`Sent a Notice with the message: ${message}`);
+							console.log(`Sent a Notice with the message: ${message}`);
 						}
 						new Notice(message);
 					}
@@ -912,10 +912,10 @@ export class TodoistSync {
 			if (file_path) {
 				file = this.app.vault.getAbstractFileByPath(file_path);
 				filepath = file_path;
-				// currentFileValue = await this.app.vault.read(file);
 				// Check if the returned file is a TFile
 				if (file instanceof TFile) {
-					currentFileValue = await this.app.vault.read(file);
+					const liveContent = this.getOpenEditorContent(file_path);
+					currentFileValue = liveContent ?? (await this.app.vault.read(file));
 				} else {
 					return;
 				}
@@ -968,6 +968,9 @@ export class TodoistSync {
 			await this.plugin.fileOperation?.completeTaskInTheFile(taskId);
 			this.plugin.cacheOperation?.closeTaskToCacheByID(taskId);
 			await this.plugin.saveSettings();
+			if (this.plugin.settings.debugMode) {
+				console.log(`closeTask: task ${taskId} marked completed`);
+			}
 			new Notice(`Task ${taskId} is closed.`);
 		} catch (error) {
 			console.error("Error closing task:", error);
@@ -982,6 +985,9 @@ export class TodoistSync {
 			await this.plugin.fileOperation?.incompleteTaskInTheFile(taskId);
 			this.plugin.cacheOperation?.reopenTaskToCacheByID(taskId);
 			await this.plugin.saveSettings();
+			if (this.plugin.settings.debugMode) {
+				console.log(`reopenTask: task ${taskId} marked incomplete`);
+			}
 			new Notice(`Task ${taskId} is reopened.`);
 		} catch (error) {
 			console.error("Error opening task:", error);
@@ -1004,7 +1010,7 @@ export class TodoistSync {
 
 				if (response) {
 					if (this.plugin.settings.debugMode) {
-						console.debug(`Task ${taskId} was deleted.`);
+						console.log(`Task ${taskId} was deleted.`);
 					}
 					new Notice(`Task ${taskId} was deleted.`);
 					deletedTaskIds.push(taskId); // Add the deleted task ID to the array
