@@ -716,7 +716,7 @@ export class TodoistSync {
 						sectionChanged ||
 						deadlineChanged)
 				) {
-					console.log(
+					console.debug(
 						"Task change status: task id:",
 						lineTask.id,
 						" on line:",
@@ -759,7 +759,7 @@ export class TodoistSync {
 					}
 
 					if (this.plugin.settings.debugMode) {
-						console.log(
+						console.debug(
 							"The updates to be sent to Todoist and Cache are:",
 							updatedContent,
 						);
@@ -845,7 +845,7 @@ export class TodoistSync {
 
 					if (lineTask_todoist_id !== null) {
 						if (this.plugin.settings.debugMode) {
-							console.log(`Sent a Notice with the message: ${message}`);
+							console.debug(`Sent a Notice with the message: ${message}`);
 						}
 						new Notice(message);
 					}
@@ -958,7 +958,7 @@ export class TodoistSync {
 
 				if (response) {
 					if (this.plugin.settings.debugMode) {
-						console.log(`Task ${taskId} was deleted.`);
+						console.debug(`Task ${taskId} was deleted.`);
 					}
 					new Notice(`Task ${taskId} was deleted.`);
 					deletedTaskIds.push(taskId); // Add the deleted task ID to the array

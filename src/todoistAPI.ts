@@ -131,7 +131,7 @@ export class TodoistNewAPI {
 			}
 
 			if(this.plugin.settings.debugMode) {
-				console.log("Todoist Task data to be added: ", taskData);
+				console.debug("Todoist Task data to be added: ", taskData);
 			}
 
 
@@ -410,7 +410,7 @@ export class TodoistNewAPI {
 			}
 
 			if (this.plugin.settings.debugMode) {
-				console.log("Todoist Task data to be updated: ", taskData);
+				console.debug("Todoist Task data to be updated: ", taskData);
 			}
 
 			const response = await requestUrl({
@@ -576,7 +576,7 @@ export class TodoistNewAPI {
 			});
 
 			if (this.plugin.settings.debugMode) {
-				console.log(`getTaskById(${taskId}) → status ${response.status}`, response.json);
+				console.debug(`getTaskById(${taskId}) → status ${response.status}`, response.json);
 			}
 
 			if (response.status >= 400) {

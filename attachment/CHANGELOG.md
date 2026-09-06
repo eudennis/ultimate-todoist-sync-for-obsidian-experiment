@@ -2,6 +2,12 @@
 
 ## 2026-09-06
 
+### 0.8.1
+
+- Resolved two more categories from the community.obsidian.md scorecard:
+    - Bumped `minAppVersion` from `1.0.0` to `1.2.3` — the actual minimum required by `Setting`/`ButtonComponent`/`AbstractTextComponent`'s `setDisabled()`, used by the import-task modal and a few settings fields.
+    - Cleaned up console logging: converted 8 `console.log()` calls that were already gated behind the debug-mode setting to `console.debug()` (Obsidian's guidelines only allow `warn`/`error`/`debug`), and removed 2 leftover, ungated debug prints in `taskParser.ts` that fired unconditionally on every task time-parse.
+
 ### 0.8.0
 
 - Fixed moving a task to a different section throwing a 400 error — `moveTaskToAnotherSection()` was posting to the generic task-update endpoint instead of Todoist's dedicated `tasks/{id}/move` endpoint.

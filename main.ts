@@ -517,7 +517,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 		this.todoistSync = new TodoistSync(this.app, this);
 
 		if (this.settings.debugMode) {
-			console.log(
+			console.debug(
 				`Another Simple Todoist Sync plugin: version ${this.manifest.version} (requires obsidian ${this.manifest.minAppVersion})`,
 			);
 		}

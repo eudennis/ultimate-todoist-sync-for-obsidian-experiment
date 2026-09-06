@@ -53,11 +53,10 @@ export default defineConfig([
 					ignoreRegex: ["https?://", "todoist://"],
 				},
 			],
-			// Deferred: bumping minAppVersion or gating newer API usage is a
-			// product decision, not part of this cleanup.
-			"obsidianmd/no-unsupported-api": "off",
-			// Deferred: console.log cleanup, unrelated to the scorecard findings.
-			"obsidianmd/rule-custom-message": "off",
+			// Resolved by bumping minAppVersion to 1.2.3 and converting the
+			// debug-gated console.log calls to console.debug (allowed) — no
+			// override needed for either, they inherit the recommended
+			// config's "error" severity.
 			"obsidianmd/settings-tab/prefer-setting-definitions": "off",
 		},
 	},

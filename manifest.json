@@ -1,8 +1,8 @@
 {
 	"id": "another-simple-todoist-sync",
 	"name": "Another Simple Todoist Sync",
-	"version": "0.8.0",
-	"minAppVersion": "1.0.0",
+	"version": "0.8.1",
+	"minAppVersion": "1.2.3",
 	"description": "Sync tasks with Todoist from within your notes.",
 	"author": "eudennis",
 	"authorUrl": "https://github.com/eudennis/",

@@ -10,7 +10,7 @@ This is a fork of [Ultimate Todoist Sync for Obsidian](https://github.com/HeroBl
 
 - **Plugin ID**: `another-simple-todoist-sync`
 - **Plugin name**: Another Simple Todoist Sync
-- **Current version**: 0.6.0
+- **Current version**: 0.8.1
 - **License**: GNU GPLv3
 
 ---
@@ -23,7 +23,7 @@ This is a fork of [Ultimate Todoist Sync for Obsidian](https://github.com/HeroBl
 - **Obsidian API**: `obsidian` npm package
 - **Todoist SDK**: `@doist/todoist-sdk` (Unified API)
 - **Type checking**: `tsc -noEmit` (strict, no emit)
-- **Min Obsidian version**: 1.0.0
+- **Min Obsidian version**: 1.2.3
 
 ---
 
