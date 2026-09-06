@@ -26,13 +26,6 @@ export default defineConfig([
 			"no-prototype-builtins": "off",
 			"@typescript-eslint/no-empty-function": "off",
 
-			// Deferred: `display()` is deprecated since Obsidian 1.13.0 in favor
-			// of the declarative getSettingDefinitions() API. Fixing this means
-			// both a settings.ts rewrite and bumping minAppVersion to 1.13.0 —
-			// a product decision (drops pre-1.13.0 Obsidian support), not just
-			// a lint fix. Tracked alongside obsidianmd/settings-tab/
-			// prefer-setting-definitions below, same root cause.
-			"@typescript-eslint/no-deprecated": "off",
 			// "Todoist" and the two multi-word product/plugin names below aren't
 			// in the rule's default brand list, so extend it (rather than
 			// replace it — passing `brands`/`acronyms` overrides the rule's
@@ -48,11 +41,6 @@ export default defineConfig([
 					ignoreRegex: ["https?://", "todoist://"],
 				},
 			],
-			// Resolved by bumping minAppVersion to 1.2.3 and converting the
-			// debug-gated console.log calls to console.debug (allowed) — no
-			// override needed for either, they inherit the recommended
-			// config's "error" severity.
-			"obsidianmd/settings-tab/prefer-setting-definitions": "off",
 		},
 	},
 ]);

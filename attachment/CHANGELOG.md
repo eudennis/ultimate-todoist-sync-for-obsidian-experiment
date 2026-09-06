@@ -9,6 +9,11 @@
     - Three `catch` blocks in `main.ts` read `error.message` without checking `error instanceof Error` first.
     - `new Notice("An error occurred:", error)` in `scheduledSynchronization()`'s top-level error handler was passing the caught error as `Notice`'s second argument — which is a display-duration number, not a message — so the error detail never actually reached the user. Now interpolated into the message text.
     - Two now-redundant `as { path?: string }` casts in `syncModule.ts` (working around the untyped return before this fix) removed.
+- Resolved the scorecard's last remaining category: migrated the settings tab off the deprecated `PluginSettingTab.display()` API to the declarative `getSettingDefinitions()` API introduced in Obsidian 1.13.0, clearing `@typescript-eslint/no-deprecated` and `obsidianmd/settings-tab/prefer-setting-definitions`. Every existing setting keeps its exact imperative construction (buttons, debounced inputs, sliders, Notices, cache lookups) inside a `render` callback — nothing about how any individual setting behaves changed. What did change:
+    - Bumped `minAppVersion` from `1.2.3` to `1.13.0`, since the new API requires it. Users on an older Obsidian won't be able to update past this point.
+    - The five section headings became native declarative groups instead of standalone heading rows.
+    - Experimental-feature-gated settings (custom sync tag, alternative keywords, opacity slider, etc.) now use the new API's `visible` predicate instead of an `if` around the setting's construction; toggling "Experimental features" calls the new `refreshDomState()` instead of a full re-render.
+    - The Todoist account info section (name/timezone/language) can no longer `await` its fetch directly, since `getSettingDefinitions()` must be synchronous. It now paints instantly from the last cached value and updates in place once the live fetch resolves — no more blank flash while loading, and a fetch failure no longer aborts rendering the rest of the tab (previously a real risk, since the old `async display()` fetched this data before building any of the settings below it).
 
 ### 0.8.1
 
