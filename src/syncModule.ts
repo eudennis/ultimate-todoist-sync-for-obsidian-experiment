@@ -62,11 +62,6 @@ export class TodoistSync {
 			if (file instanceof TFile) {
 				const liveContent = this.getOpenEditorContent(file_path);
 				currentFileValue = liveContent ?? (await this.app.vault.read(file));
-				if (this.plugin.settings.debugMode) {
-					console.log(
-						`deletedTaskCheck: reading ${filepath} from ${liveContent !== null ? "open editor buffer" : "vault.read()"}`,
-					);
-				}
 			} else {
 				return;
 			}
@@ -305,11 +300,6 @@ export class TodoistSync {
 			if (file instanceof TFile) {
 				const liveContent = this.getOpenEditorContent(file_path);
 				currentFileValue = liveContent ?? (await this.app.vault.read(file));
-				if (this.plugin.settings.debugMode) {
-					console.log(
-						`fullTextNewTaskCheck: reading ${filepath} from ${liveContent !== null ? "open editor buffer" : "vault.read()"}`,
-					);
-				}
 			} else {
 				return;
 			}
@@ -797,7 +787,7 @@ export class TodoistSync {
 				if (Object.keys(updatedContent).length > 0) {
 					if (this.plugin.cacheOperation?.checkTaskIdIsOld(lineTask.id)) {
 						if (this.plugin.settings.debugMode) {
-							console.error(
+							console.warn(
 								`Task id is using old format (${lineTask.id}), it will not trigger any update. (File ${filepath} on line ${lineNumber})`,
 							);
 						}
