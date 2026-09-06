@@ -2,6 +2,14 @@
 
 ## 2026-09-06
 
+### 0.8.2
+
+- Resolved the scorecard's SDK any-typing category: added real TypeScript types for Todoist API responses in `todoistAPI.ts` (tasks, projects, sections, user data, activity events), reusing the existing `Task`/`TodoistSection`/`TodoistUserData` types the rest of the codebase already relies on. This cleared all 120 `@typescript-eslint/no-unsafe-*`/`no-base-to-string` findings across the codebase — typing the API layer properly resolved most of the downstream findings in `syncModule.ts`, `settings.ts`, and `taskParser.ts` for free, since they'd been receiving `any` from these calls all along.
+- Along the way, fixed a few real gaps the typing surfaced:
+    - Three `catch` blocks in `main.ts` read `error.message` without checking `error instanceof Error` first.
+    - `new Notice("An error occurred:", error)` in `scheduledSynchronization()`'s top-level error handler was passing the caught error as `Notice`'s second argument — which is a display-duration number, not a message — so the error detail never actually reached the user. Now interpolated into the message text.
+    - Two now-redundant `as { path?: string }` casts in `syncModule.ts` (working around the untyped return before this fix) removed.
+
 ### 0.8.1
 
 - Resolved two more categories from the community.obsidian.md scorecard:

@@ -82,7 +82,7 @@ export class ImportTaskFromTodoistModal extends Modal {
 		const priority = (task.priority as number | undefined) ?? 1;
 		const priorityLabel = this.invertPriority(priority);
 
-		new Setting(contentEl).setName("Task content").setDesc(String(task.content ?? "")).setDisabled(true);
+		new Setting(contentEl).setName("Task content").setDesc(String((task.content as string | undefined) ?? "")).setDisabled(true);
 
 		if (due?.date) {
 			const dateOnly = due.date.split("T")[0];
@@ -180,11 +180,11 @@ export class ImportTaskFromTodoistModal extends Modal {
 	}
 
 	private formatTaskLine(task: Record<string, unknown>): string {
-		const content = String(task.content ?? "");
+		const content = String((task.content as string | undefined) ?? "");
 		const due = task.due as { date?: string; datetime?: string; timezone?: string } | null | undefined;
 		const labels = (task.labels as string[] | undefined) ?? [];
 		const priority = (task.priority as number | undefined) ?? 1;
-		const taskId = String(task.id ?? "");
+		const taskId = String((task.id as string | undefined) ?? "");
 		const syncTag = this.plugin.settings.customSyncTag ?? "#tdsync";
 
 		const taskUrl = this.plugin.settings.linksAppURI
@@ -220,7 +220,7 @@ export class ImportTaskFromTodoistModal extends Modal {
 	}
 
 	private async insertTask(task: Record<string, unknown>) {
-		const taskId = String(task.id ?? "");
+		const taskId = String((task.id as string | undefined) ?? "");
 		if (!taskId) {
 			new Notice("Task ID is missing, cannot insert.");
 			return;
@@ -252,7 +252,7 @@ export class ImportTaskFromTodoistModal extends Modal {
 
 		await this.plugin.saveSettings();
 
-		new Notice(`Task "${String(task.content ?? "")}" imported successfully.`);
+		new Notice(`Task "${String((task.content as string | undefined) ?? "")}" imported successfully.`);
 		this.close();
 	}
 }

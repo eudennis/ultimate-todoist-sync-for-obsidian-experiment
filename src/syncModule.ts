@@ -194,7 +194,7 @@ export class TodoistSync {
 					console.error("Failed to get task ID");
 					return;
 				}
-				(newTask as { path?: string }).path = filepath;
+				newTask.path = filepath;
 				new Notice(
 					`New task "${newTask.content}" added. Task ID: ${newTask.id}`,
 				);
@@ -350,14 +350,14 @@ export class TodoistSync {
 						...(currentTask.deadline_date ? { deadline_date: currentTask.deadline_date } : {}),
 					});
 
-					const todoist_id = newTask?.id;
-					if (!todoist_id) {
-						console.error("Failed to get task ID");
-						return;
-					}
 					if (!newTask) {
 						console.error("Failed to add new task");
 						new Notice("Failed to add new task");
+						return;
+					}
+					const todoist_id = newTask.id;
+					if (!todoist_id) {
+						console.error("Failed to get task ID");
 						return;
 					}
 
@@ -772,7 +772,7 @@ export class TodoistSync {
 					);
 
 					if (updatedTask) {
-						(updatedTask as { path?: string }).path = filepath;
+						updatedTask.path = filepath;
 						this.plugin.cacheOperation?.updateTaskToCacheByID(updatedTask);
 						savedTask = updatedTask;
 					}

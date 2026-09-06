@@ -26,17 +26,12 @@ export default defineConfig([
 			"no-prototype-builtins": "off",
 			"@typescript-eslint/no-empty-function": "off",
 
-			// Deferred: these stem from the Todoist SDK's loosely-typed response
-			// objects propagating `any` throughout the codebase. Fixing them means
-			// adding proper types across most SDK call sites, a larger effort than
-			// the scorecard-driven cleanup this config was introduced for. Revisit
-			// as a follow-up.
-			"@typescript-eslint/no-unsafe-member-access": "off",
-			"@typescript-eslint/no-unsafe-assignment": "off",
-			"@typescript-eslint/no-unsafe-argument": "off",
-			"@typescript-eslint/no-unsafe-return": "off",
-			"@typescript-eslint/no-unsafe-call": "off",
-			"@typescript-eslint/no-base-to-string": "off",
+			// Deferred: `display()` is deprecated since Obsidian 1.13.0 in favor
+			// of the declarative getSettingDefinitions() API. Fixing this means
+			// both a settings.ts rewrite and bumping minAppVersion to 1.13.0 —
+			// a product decision (drops pre-1.13.0 Obsidian support), not just
+			// a lint fix. Tracked alongside obsidianmd/settings-tab/
+			// prefer-setting-definitions below, same root cause.
 			"@typescript-eslint/no-deprecated": "off",
 			// "Todoist" and the two multi-word product/plugin names below aren't
 			// in the rule's default brand list, so extend it (rather than

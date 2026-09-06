@@ -10,7 +10,7 @@ This is a fork of [Ultimate Todoist Sync for Obsidian](https://github.com/HeroBl
 
 - **Plugin ID**: `another-simple-todoist-sync`
 - **Plugin name**: Another Simple Todoist Sync
-- **Current version**: 0.8.1
+- **Current version**: 0.8.2
 - **License**: GNU GPLv3
 
 ---

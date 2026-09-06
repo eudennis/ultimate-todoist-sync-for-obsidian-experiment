@@ -2,6 +2,8 @@ import { TodoistApi } from "@doist/todoist-sdk";
 import type AnotherSimpleTodoistSync from "main";
 import type { App } from "obsidian";
 import { requestUrl } from "obsidian";
+import type { Task } from "./cacheOperation";
+import type { TodoistSection, TodoistUserData } from "./settings";
 
 type TodoistEvent = {
 	id: string;
@@ -22,6 +24,18 @@ type FilterOptions = {
 	event_type?: string;
 	object_type?: string;
 };
+
+// A project as returned by this API layer, which always has a fresh string
+// id — narrower than settings.ts's TodoistProject (id: string | number),
+// which also has to describe legacy cached data.
+type TodoistApiProject = {
+	id: string;
+	name: string;
+};
+
+type ProjectsListResponse =
+	| TodoistApiProject[]
+	| { results?: TodoistApiProject[]; projects?: TodoistApiProject[]; next_cursor?: string };
 
 export class TodoistNewAPI {
 	app: App;
@@ -66,7 +80,7 @@ export class TodoistNewAPI {
 		section_id?: string;
 		path?: string;
 		deadline_date?: string;
-	}) {
+	}): Promise<Task | false> {
 		try {
 			const taskData: {
 				content: string;
@@ -146,7 +160,7 @@ export class TodoistNewAPI {
 					},
 					body: JSON.stringify(taskData),
 				});
-				return response.json;
+				return response.json as Task;
 			} catch (error) {
 				console.error("Error adding task:", error);
 				return false;
@@ -160,7 +174,7 @@ export class TodoistNewAPI {
 	}
 
 	// TODO prepare for response with 100+ sections
-	async getAllSections() {
+	async getAllSections(): Promise<{ results: TodoistSection[] } | false> {
 		const token = this.plugin.settings.todoistAPIToken;
 		try {
 			const response = await requestUrl({
@@ -171,7 +185,7 @@ export class TodoistNewAPI {
 					"Content-Type": "application/json",
 				},
 			});
-			return response.json;
+			return response.json as { results: TodoistSection[] };
 		} catch (error) {
 			console.error("Error getting sections", error);
 			return false;
@@ -179,10 +193,10 @@ export class TodoistNewAPI {
 	}
 
 	// Updated: Retrieve all projects using the new REST API and handle pagination if present
-	async getAllProjects() {
+	async getAllProjects(): Promise<TodoistApiProject[] | false> {
 		const token = this.plugin.settings.todoistAPIToken;
-		const allProjects = [];
-		let nextCursor = undefined;
+		const allProjects: TodoistApiProject[] = [];
+		let nextCursor: string | undefined = undefined;
 		try {
 			do {
 				const url = new URL("https://todoist.com/api/v1/projects?limit=100");
@@ -197,7 +211,7 @@ export class TodoistNewAPI {
 						"Content-Type": "application/json",
 					},
 				});
-				const data = response.json;
+				const data = response.json as ProjectsListResponse;
 
 				// The API returns an array of projects and possibly a next_cursor property
 				if (Array.isArray(data)) {
@@ -209,7 +223,7 @@ export class TodoistNewAPI {
 				}
 
 				// Pagination: look for next_cursor in the response body
-				nextCursor = data.next_cursor ? data.next_cursor : undefined;
+				nextCursor = Array.isArray(data) ? undefined : (data.next_cursor ?? undefined);
 			} while (nextCursor !== undefined);
 			return allProjects;
 		} catch (error) {
@@ -219,7 +233,7 @@ export class TodoistNewAPI {
 	}
 
 	// TODO: how do I get the last 1000 events? Should I consider user plan?
-	async getNonObsidianAllActivityEvents() {
+	async getNonObsidianAllActivityEvents(): Promise<TodoistEvent[]> {
 		const token = this.plugin.settings.todoistAPIToken;
 		try {
 			const response = await requestUrl({
@@ -235,7 +249,7 @@ export class TodoistNewAPI {
 				throw new Error(`API returned error status: ${response.status}`);
 			}
 
-			const data = response.json.results;
+			const data = (response.json as { results?: TodoistEvent[] }).results;
 			// console.log('Todoist API Response for activities:', data); // Debug log
 
 			// Check if data exists and has events array
@@ -273,7 +287,10 @@ export class TodoistNewAPI {
 		});
 	}
 
-	async getAllResources() {
+	// Returned verbatim to callers, which only ever JSON.stringify it for a
+	// backup file — left as `unknown` rather than modeling the full sync
+	// resources shape, which no code here actually reads.
+	async getAllResources(): Promise<unknown> {
 		const token = this.plugin.settings.todoistAPIToken;
 		try {
 			const response = await requestUrl({
@@ -293,7 +310,7 @@ export class TodoistNewAPI {
 				throw new Error(`API returned error status: ${response.status}`);
 			}
 
-			const data = response.json;
+			const data: unknown = response.json;
 			return data;
 		} catch (error) {
 			console.error("Failed to fetch all resources from Todoist:", error);
@@ -319,7 +336,7 @@ export class TodoistNewAPI {
 			section_id?: string;
 			deadline_date?: string;
 		},
-	) {
+	): Promise<Task> {
 		const token = this.plugin.settings.todoistAPIToken;
 
 		if (!taskId) {
@@ -427,7 +444,7 @@ export class TodoistNewAPI {
 				throw new Error(`API returned error status: ${response.status}`);
 			}
 
-			const updatedTask = response.json;
+			const updatedTask = response.json as Task;
 			return updatedTask;
 		} catch (error) {
 			if (error instanceof Error) {
@@ -526,7 +543,7 @@ export class TodoistNewAPI {
 		}
 	}
 
-	async getTaskDueById(taskId: string) {
+	async getTaskDueById(taskId: string): Promise<Task["due"] | null> {
 		const token = this.plugin.settings.todoistAPIToken;
 
 		if (!taskId) {
@@ -547,7 +564,7 @@ export class TodoistNewAPI {
 				throw new Error(`API returned error status: ${response.status}`);
 			}
 
-			const task = response.json;
+			const task = response.json as Task;
 			return task.due ?? null;
 		} catch (error) {
 			if (error instanceof Error) {
@@ -557,7 +574,7 @@ export class TodoistNewAPI {
 		}
 	}
 
-	async getTaskById(taskId: string) {
+	async getTaskById(taskId: string): Promise<Record<string, unknown>> {
 		const token = this.plugin.settings.todoistAPIToken;
 
 		if (!taskId) {
@@ -584,7 +601,7 @@ export class TodoistNewAPI {
 				throw new Error(`API returned error status ${response.status}: ${detail}`);
 			}
 
-			return response.json;
+			return response.json as Record<string, unknown>;
 		} catch (error) {
 			if (error instanceof Error) {
 				throw new Error(`Error retrieving task: ${error.message}`);
@@ -600,7 +617,7 @@ export class TodoistNewAPI {
 		filter?: string;
 		lang?: string;
 		ids?: Array<string>;
-	}) {
+	}): Promise<Task[]> {
 		const token = this.plugin.settings.todoistAPIToken;
 		try {
 			// Build query string from options
@@ -627,7 +644,7 @@ export class TodoistNewAPI {
 				throw new Error(`API returned error status: ${response.status}`);
 			}
 
-			const tasks = response.json;
+			const tasks = response.json as Task[];
 			return tasks;
 		} catch (error) {
 			if (error instanceof Error) {
@@ -637,7 +654,7 @@ export class TodoistNewAPI {
 		}
 	}
 
-	async createNewSection(name: string, project_id: string) {
+	async createNewSection(name: string, project_id: string): Promise<TodoistSection> {
 		const token = this.plugin.settings.todoistAPIToken;
 
 		if (!name || !project_id) {
@@ -662,7 +679,7 @@ export class TodoistNewAPI {
 				throw new Error(`API returned error status: ${response.status}`);
 			}
 
-			const newSection = response.json;
+			const newSection = response.json as TodoistSection;
 			return newSection;
 		} catch (error) {
 			if (error instanceof Error) {
@@ -672,7 +689,7 @@ export class TodoistNewAPI {
 		}
 	}
 
-	async createNewProject(name: string) {
+	async createNewProject(name: string): Promise<TodoistApiProject> {
 		const token = this.plugin.settings.todoistAPIToken;
 		try {
 			const response = await requestUrl({
@@ -691,7 +708,7 @@ export class TodoistNewAPI {
 				throw new Error(`API returned error status: ${response.status}`);
 			}
 
-			const newProject = response.json;
+			const newProject = response.json as TodoistApiProject;
 			return newProject;
 		} catch (error) {
 			if (error instanceof Error) {
@@ -712,7 +729,7 @@ export class TodoistNewAPI {
 	//   async getProjectsActivity() {
 	//   async generateUniqueId(): Promise<string> {
 
-	async getUserResource() {
+	async getUserResource(): Promise<TodoistUserData> {
 		const token = this.plugin.settings.todoistAPIToken;
 		try {
 			const response = await requestUrl({
@@ -728,7 +745,7 @@ export class TodoistNewAPI {
 				throw new Error(`API returned error status: ${response.status}`);
 			}
 
-			const data = response.json;
+			const data = response.json as TodoistUserData;
 			return data;
 		} catch (error) {
 			console.error("Failed to fetch user resources:", error);

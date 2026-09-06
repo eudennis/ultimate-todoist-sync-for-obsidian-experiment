@@ -728,7 +728,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 			.addText((text) =>
 				text
 					.setPlaceholder("User language")
-					.setValue(userResource?.lang)
+					.setValue(userResource?.lang ?? "")
 					.setDisabled(true),
 			);
 		new Setting(containerEl).setHeading().setName("Developer settings");
