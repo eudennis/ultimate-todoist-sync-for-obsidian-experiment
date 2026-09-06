@@ -179,10 +179,10 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 				{},
 			) ?? {};
 
-		new Setting(containerEl).setHeading().setName("API & Sync Settings");
+		new Setting(containerEl).setHeading().setName("API & sync settings");
 
 		new Setting(containerEl)
-			.setName("Todoist API Token")
+			.setName("Todoist API token")
 			.setDesc("Get your API token from Todoist settings")
 			.addText((text) =>
 				text
@@ -301,7 +301,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 			new Setting(containerEl)
 				.setName("Custom sync tag")
 				.setDesc(
-					"Set a custom tag to sync tasks with Todoist. NOTE: Using #todoist might conflict with older version of this plugin",
+					"Set a custom tag to sync tasks with Todoist. Note: Using #Todoist might conflict with older version of this plugin",
 				)
 				.addText((text) =>
 					text
@@ -328,7 +328,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 		// Prevent plugin from any sync to prevent issues while Obsidian is indexing files
 		if (this.plugin.settings.experimentalFeatures) {
 			new Setting(containerEl)
-				.setName("Delayed first Sync")
+				.setName("Delayed first sync")
 				.setDesc(
 					"This will hold any sync for 1 minute, to give Obsidian time to sync all files.",
 				)
@@ -348,7 +348,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 			.addButton((button) =>
 				button.setButtonText("Sync").onClick(async () => {
 					if (!this.plugin.settings.apiInitialized) {
-						new Notice("Please set the Todoist api first");
+						new Notice("Please set the Todoist API first");
 						return;
 					}
 					try {
@@ -518,17 +518,17 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 					}),
 			);
 
-		new Setting(containerEl).setHeading().setName("Backup & Data Settings");
+		new Setting(containerEl).setHeading().setName("Backup & data settings");
 
 		new Setting(containerEl)
-			.setName("Backup Todoist Data")
+			.setName("Backup Todoist data")
 			.setDesc(
 				"A backup file will be stored in the root directory of the Obsidian vault.",
 			)
 			.addButton((button) =>
 				button.setButtonText("Backup").onClick(() => {
 					if (!this.plugin.settings.apiInitialized) {
-						new Notice("Please set the Todoist api first");
+						new Notice("Please set the Todoist API first");
 						return;
 					}
 					void this.plugin.todoistSync?.backupTodoistAllResources();
@@ -573,7 +573,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 
 		if (this.plugin.settings.experimentalFeatures) {
 			new Setting(containerEl)
-				.setName("Obsidian Tasks Integration")
+				.setName("Obsidian Tasks integration")
 				.setDesc(
 					"In order to have this plugin properly working with Obsidian Tasks plugin, it has to reorder the link and tid comment.",
 				)
@@ -591,7 +591,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 			new Setting(containerEl)
 				.setName("Change URL to app URI")
 				.setDesc(
-					'Create tasks links using app URI ("todoist://") instead of brower url ("https://app.todoist.com/") to open desktop app instead of browser.',
+					'Create tasks links using app URI ("todoist://") instead of browser URL ("https://app.todoist.com/") to open desktop app instead of browser.',
 				)
 				.addToggle((component) =>
 					component
@@ -639,7 +639,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 			new Setting(containerEl)
 				.setName("Import task from Todoist link")
 				.setDesc(
-					'Adds a command to the palette ("Import task from Todoist link") to fetch a Todoist task by URL and insert it into the current note, ready to sync.',
+					'Adds a command to the palette ("import task from Todoist link") to fetch a Todoist task by URL and insert it into the current note, ready to sync.',
 				)
 				.addToggle((component) =>
 					component
@@ -672,7 +672,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setHeading()
-			.setName("User Data Settings")
+			.setName("User data settings")
 			.setDesc(
 				"For now, those settings can only be changed in your Todoist account.",
 			);
@@ -715,7 +715,7 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 			.setDesc("Timezone set on your Todoist account.")
 			.addText((text) =>
 				text
-					.setPlaceholder("User Timezone")
+					.setPlaceholder("User timezone")
 					.setValue(
 						`${userResource?.tz_info?.timezone} (${userResource?.tz_info?.gmt_string})`,
 					)
@@ -727,11 +727,11 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 			.setDesc("Language set on your Todoist account.")
 			.addText((text) =>
 				text
-					.setPlaceholder("User Language")
+					.setPlaceholder("User language")
 					.setValue(userResource?.lang)
 					.setDisabled(true),
 			);
-		new Setting(containerEl).setHeading().setName("Developer Settings");
+		new Setting(containerEl).setHeading().setName("Developer settings");
 
 		new Setting(containerEl)
 			.setName("Debug mode")

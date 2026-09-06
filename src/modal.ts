@@ -20,7 +20,7 @@ export class SetDefaultProjectInTheFilepathModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 		contentEl.createEl("h5", {
-			text: "Another Todoist Sync: Set default project for the current file.",
+			text: "Another Simple Todoist Sync: Set default project for the current file.",
 		});
 
 		this.defaultProjectId =

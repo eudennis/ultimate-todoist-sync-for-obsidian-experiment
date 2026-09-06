@@ -308,7 +308,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 		// Adds an edit command to trigger the manual sync.
 		this.addCommand({
 			id: "asts-trigger-manual-sync",
-			name: "Trigger the Manual Sync",
+			name: "Trigger the manual sync",
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				if (!view) {
 					return;
@@ -317,7 +317,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 				if (view.file) {
 					// filepath = view.file.path
 					if (!this.settings.apiInitialized) {
-						new Notice("Please set the Todoist api first");
+						new Notice("Please set the Todoist API first");
 						return;
 					}
 					try {
@@ -354,7 +354,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 					return;
 				}
 				if (!this.settings.experimentalFeatures || !this.settings.enableImportFromTodoistLink) {
-					new Notice('Enable "Import task from Todoist link" under Experimental Features in the plugin settings.');
+					new Notice('Enable "import task from Todoist link" under experimental features in the plugin settings.');
 					return;
 				}
 				if (!this.checkModuleClass()) {
@@ -460,7 +460,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 			this.fileOperation = undefined;
 			this.todoistSync = undefined;
 			new Notice(
-				"Another Simple Todoist Sync plugin initialization failed, please check the Todoist api",
+				"Another Simple Todoist Sync plugin initialization failed, please check the Todoist API",
 			);
 			return;
 		}
@@ -480,7 +480,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 				await this.todoistSync.backupTodoistAllResources();
 			} catch (error) {
 				console.error(`error creating user data folder: ${error}`);
-				new Notice("error creating user data folder");
+				new Notice("Error creating user data folder");
 				return;
 			}
 

@@ -141,7 +141,7 @@ export class TaskParser {
 		if (!projectId) {
 			console.error(`projectId was not found.${this.locationSuffix(filepath, lineNumber)}`);
 			new Notice(
-				"ProjectId was not found. Please select a default project on Settings",
+				"ProjectId was not found. Please select a default project on settings",
 			);
 		}
 

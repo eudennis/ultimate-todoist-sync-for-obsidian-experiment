@@ -1,6 +1,8 @@
 import tsParser from "@typescript-eslint/parser";
 import obsidianmd from "eslint-plugin-obsidianmd";
 import { defineConfig } from "eslint/config";
+import { DEFAULT_BRANDS } from "eslint-plugin-obsidianmd/dist/lib/rules/ui/brands.js";
+import { DEFAULT_ACRONYMS } from "eslint-plugin-obsidianmd/dist/lib/rules/ui/acronyms.js";
 
 export default defineConfig([
 	{
@@ -36,9 +38,21 @@ export default defineConfig([
 			"@typescript-eslint/no-unsafe-call": "off",
 			"@typescript-eslint/no-base-to-string": "off",
 			"@typescript-eslint/no-deprecated": "off",
-			// Deferred: UI copy pass (48 hits) — separate from the scorecard's
-			// code-level findings, best done as its own review.
-			"obsidianmd/ui/sentence-case": "off",
+			// "Todoist" and the two multi-word product/plugin names below aren't
+			// in the rule's default brand list, so extend it (rather than
+			// replace it — passing `brands`/`acronyms` overrides the rule's
+			// defaults outright) to keep recognizing "Obsidian", "API", etc.
+			// ignoreRegex skips strings containing a literal URL/URI scheme
+			// example, which aren't prose and shouldn't get "sentence cased"
+			// into a domain name or scheme with the wrong casing.
+			"obsidianmd/ui/sentence-case": [
+				"warn",
+				{
+					brands: [...DEFAULT_BRANDS, "Another Simple Todoist Sync", "Obsidian Tasks", "Todoist"],
+					acronyms: [...DEFAULT_ACRONYMS, "URI"],
+					ignoreRegex: ["https?://", "todoist://"],
+				},
+			],
 			// Deferred: bumping minAppVersion or gating newer API usage is a
 			// product decision, not part of this cleanup.
 			"obsidianmd/no-unsupported-api": "off",

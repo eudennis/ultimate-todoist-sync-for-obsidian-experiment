@@ -27,7 +27,7 @@ export class ImportTaskFromTodoistModal extends Modal {
 	private renderUrlInput() {
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.createEl("h5", { text: "Another Todoist Sync: Import task from Todoist link" });
+		contentEl.createEl("h5", { text: "Another Simple Todoist Sync: Import task from Todoist link" });
 
 		let url = "";
 
@@ -43,7 +43,7 @@ export class ImportTaskFromTodoistModal extends Modal {
 			)
 			.addButton((button) =>
 				button
-					.setButtonText("Fetch Task")
+					.setButtonText("Fetch task")
 					.setCta()
 					.onClick(async () => {
 						const taskId = this.extractTaskId(url);
@@ -66,7 +66,7 @@ export class ImportTaskFromTodoistModal extends Modal {
 						} catch (error) {
 							new Notice("Could not fetch task. Check the URL and your API token.");
 							console.error("ImportTaskFromTodoistModal fetch error:", error);
-							button.setButtonText("Fetch Task").setDisabled(false);
+							button.setButtonText("Fetch task").setDisabled(false);
 						}
 					}),
 			);
@@ -75,7 +75,7 @@ export class ImportTaskFromTodoistModal extends Modal {
 	private renderPreview(task: Record<string, unknown>) {
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.createEl("h5", { text: "Another Todoist Sync: Import task from Todoist link" });
+		contentEl.createEl("h5", { text: "Another Simple Todoist Sync: Import task from Todoist link" });
 
 		const due = task.due as { date?: string; datetime?: string; timezone?: string } | null | undefined;
 		const labels = (task.labels as string[] | undefined) ?? [];
@@ -102,7 +102,7 @@ export class ImportTaskFromTodoistModal extends Modal {
 		new Setting(contentEl)
 			.addButton((button) =>
 				button
-					.setButtonText("Insert Task")
+					.setButtonText("Insert task")
 					.setCta()
 					.onClick(async () => {
 						await this.insertTask(task);
