@@ -1,6 +1,6 @@
 {
 	"name": "simple-todoist-sync",
-	"version": "0.8.0",
+	"version": "0.8.2",
 	"description": "Sync tasks with Todoist.",
 	"main": "main.js",
 	"scripts": {

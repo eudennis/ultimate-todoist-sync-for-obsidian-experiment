@@ -45,6 +45,15 @@ describe("TaskParser", () => {
 		});
 	});
 
+	describe("hasCalendarEmoji", () => {
+		it("is false when no date emoji/keyword is present", () => {
+			expect(makeParser().hasCalendarEmoji(lines.basic)).toBe(false);
+		});
+		it("is true when a date emoji is present", () => {
+			expect(makeParser().hasCalendarEmoji(lines.withDueDate)).toBe(true);
+		});
+	});
+
 	describe("hasDueDate / getDueDateFromLineText", () => {
 		it("detects an emoji due date", () => {
 			expect(makeParser().hasDueDate(lines.withDueDate)).toBe(true);

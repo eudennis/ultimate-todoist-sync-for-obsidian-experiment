@@ -12,6 +12,21 @@ export class TodoistSync {
 		this.plugin = plugin;
 	}
 
+	// Read a file's current text, preferring an already-open editor's live buffer over vault.read().
+	// vault.read() reflects only what has been flushed to disk, which can lag behind an edit made
+	// via editor.replaceRange() (e.g. the tid link lineContentNewTaskCheck/fullTextNewTaskCheck just
+	// inserted). Reading the stale on-disk copy right after that made deletedTaskCheck think a
+	// just-created task's id was missing from the file and delete it from Todoist moments later.
+	private getOpenEditorContent(filepath: string): string | null {
+		const openLeaf = this.app.workspace
+			.getLeavesOfType("markdown")
+			.find((leaf) => (leaf.view as MarkdownView).file?.path === filepath);
+		if (!openLeaf) {
+			return null;
+		}
+		return (openLeaf.view as MarkdownView).editor.getValue();
+	}
+
 	// Check if the file has "tasks" without links
 	checkForTasksWithoutLink() {
 		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -45,7 +60,8 @@ export class TodoistSync {
 			filepath = file_path;
 			// Check if the returned file is a TFile
 			if (file instanceof TFile) {
-				currentFileValue = await this.app.vault.read(file);
+				const liveContent = this.getOpenEditorContent(file_path);
+				currentFileValue = liveContent ?? (await this.app.vault.read(file));
 			} else {
 				return;
 			}
@@ -79,32 +95,42 @@ export class TodoistSync {
 		const frontMatter_todoistCount = frontMatter.todoistCount;
 
 		// Circle through the tasks on the frontmatter, if the current file doesn't include it, move to deletion phase
-		const deleteTasksPromises = frontMatter_todoistTasks
-			.filter(
-				(taskId: string) =>
-					!currentFileValueWithOutFrontMatter?.includes(taskId),
-			)
-			.map(async (taskId: string) => {
-				// If the taskId was not found within the file, delete it.
-				if (!currentFileValueWithOutFrontMatter?.includes(taskId)) {
-					try {
-						const api = this.plugin.todoistNewAPI?.initializeNewAPI();
-						if (!api) {
-							console.error("Failed to initialize Todoist API");
-							new Notice("Failed to initialize Todoist API");
-							return;
-						}
-						const response = await api.deleteTask(taskId);
+		const missingTaskIds = frontMatter_todoistTasks.filter(
+			(taskId: string) => !currentFileValueWithOutFrontMatter?.includes(taskId),
+		);
 
-						if (response) {
-							new Notice(`Task ${taskId} was deleted`);
-							return taskId; // Return the deleted task ID
-						}
-					} catch (error) {
-						console.error(`Failed to delete task ${taskId}: ${error}`);
+		if (this.plugin.settings.debugMode && missingTaskIds.length > 0) {
+			console.log(
+				`deletedTaskCheck: task id(s) [${missingTaskIds.join(", ")}] not found in ${filepath}, deleting from Todoist`,
+			);
+		}
+
+		const deleteTasksPromises = missingTaskIds.map(async (taskId: string) => {
+			// If the taskId was not found within the file, delete it.
+			if (!currentFileValueWithOutFrontMatter?.includes(taskId)) {
+				try {
+					const api = this.plugin.todoistNewAPI?.initializeNewAPI();
+					if (!api) {
+						console.error("Failed to initialize Todoist API");
+						new Notice("Failed to initialize Todoist API");
+						return;
 					}
+					const response = await api.deleteTask(taskId);
+
+					if (response) {
+						if (this.plugin.settings.debugMode) {
+							console.log(
+								`deletedTaskCheck: task ${taskId} deleted from Todoist (missing from ${filepath})`,
+							);
+						}
+						new Notice(`Task ${taskId} was deleted`);
+						return taskId; // Return the deleted task ID
+					}
+				} catch (error) {
+					console.error(`Failed to delete task ${taskId}: ${error}`);
 				}
-			});
+			}
+		});
 
 		const deletedTaskIds = await Promise.all(deleteTasksPromises);
 		const deletedTaskAmount = deletedTaskIds.length;
@@ -194,7 +220,12 @@ export class TodoistSync {
 					console.error("Failed to get task ID");
 					return;
 				}
-				(newTask as { path?: string }).path = filepath;
+				newTask.path = filepath;
+				if (this.plugin.settings.debugMode) {
+					console.log(
+						`lineContentNewTaskCheck: created task ${todoist_id} "${newTask.content}" in ${filepath} on line ${line}`,
+					);
+				}
 				new Notice(
 					`New task "${newTask.content}" added. Task ID: ${newTask.id}`,
 				);
@@ -264,11 +295,11 @@ export class TodoistSync {
 		if (file_path) {
 			file = this.app.vault.getAbstractFileByPath(file_path);
 			filepath = file_path;
-			// currentFileValue = await this.app.vault.read(file)
 
 			// Check if the returned file is a TFile
 			if (file instanceof TFile) {
-				currentFileValue = await this.app.vault.read(file);
+				const liveContent = this.getOpenEditorContent(file_path);
+				currentFileValue = liveContent ?? (await this.app.vault.read(file));
 			} else {
 				return;
 			}
@@ -350,17 +381,22 @@ export class TodoistSync {
 						...(currentTask.deadline_date ? { deadline_date: currentTask.deadline_date } : {}),
 					});
 
-					const todoist_id = newTask?.id;
-					if (!todoist_id) {
-						console.error("Failed to get task ID");
-						return;
-					}
 					if (!newTask) {
 						console.error("Failed to add new task");
 						new Notice("Failed to add new task");
 						return;
 					}
+					const todoist_id = newTask.id;
+					if (!todoist_id) {
+						console.error("Failed to get task ID");
+						return;
+					}
 
+					if (this.plugin.settings.debugMode) {
+						console.log(
+							`fullTextNewTaskCheck: created task ${todoist_id} "${newTask.content}" in ${filepath} on line ${i}`,
+						);
+					}
 					new Notice(
 						`New task "${newTask.content}" added. Task ID: ${newTask.id}`,
 					);
@@ -751,7 +787,7 @@ export class TodoistSync {
 				if (Object.keys(updatedContent).length > 0) {
 					if (this.plugin.cacheOperation?.checkTaskIdIsOld(lineTask.id)) {
 						if (this.plugin.settings.debugMode) {
-							console.error(
+							console.warn(
 								`Task id is using old format (${lineTask.id}), it will not trigger any update. (File ${filepath} on line ${lineNumber})`,
 							);
 						}
@@ -772,7 +808,7 @@ export class TodoistSync {
 					);
 
 					if (updatedTask) {
-						(updatedTask as { path?: string }).path = filepath;
+						updatedTask.path = filepath;
 						this.plugin.cacheOperation?.updateTaskToCacheByID(updatedTask);
 						savedTask = updatedTask;
 					}
@@ -866,10 +902,10 @@ export class TodoistSync {
 			if (file_path) {
 				file = this.app.vault.getAbstractFileByPath(file_path);
 				filepath = file_path;
-				// currentFileValue = await this.app.vault.read(file);
 				// Check if the returned file is a TFile
 				if (file instanceof TFile) {
-					currentFileValue = await this.app.vault.read(file);
+					const liveContent = this.getOpenEditorContent(file_path);
+					currentFileValue = liveContent ?? (await this.app.vault.read(file));
 				} else {
 					return;
 				}
@@ -922,6 +958,9 @@ export class TodoistSync {
 			await this.plugin.fileOperation?.completeTaskInTheFile(taskId);
 			this.plugin.cacheOperation?.closeTaskToCacheByID(taskId);
 			await this.plugin.saveSettings();
+			if (this.plugin.settings.debugMode) {
+				console.log(`closeTask: task ${taskId} marked completed`);
+			}
 			new Notice(`Task ${taskId} is closed.`);
 		} catch (error) {
 			console.error("Error closing task:", error);
@@ -936,6 +975,9 @@ export class TodoistSync {
 			await this.plugin.fileOperation?.incompleteTaskInTheFile(taskId);
 			this.plugin.cacheOperation?.reopenTaskToCacheByID(taskId);
 			await this.plugin.saveSettings();
+			if (this.plugin.settings.debugMode) {
+				console.log(`reopenTask: task ${taskId} marked incomplete`);
+			}
 			new Notice(`Task ${taskId} is reopened.`);
 		} catch (error) {
 			console.error("Error opening task:", error);

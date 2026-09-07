@@ -10,7 +10,7 @@ This is a fork of [Ultimate Todoist Sync for Obsidian](https://github.com/HeroBl
 
 - **Plugin ID**: `another-simple-todoist-sync`
 - **Plugin name**: Another Simple Todoist Sync
-- **Current version**: 0.6.0
+- **Current version**: 0.8.2
 - **License**: GNU GPLv3
 
 ---
@@ -23,7 +23,7 @@ This is a fork of [Ultimate Todoist Sync for Obsidian](https://github.com/HeroBl
 - **Obsidian API**: `obsidian` npm package
 - **Todoist SDK**: `@doist/todoist-sdk` (Unified API)
 - **Type checking**: `tsc -noEmit` (strict, no emit)
-- **Min Obsidian version**: 1.0.0
+- **Min Obsidian version**: 1.13.0
 
 ---
 
@@ -231,7 +231,7 @@ These are gated behind the "Experimental features" toggle in settings:
 ## Adding New Features
 
 1. **New task syntax field**: Add detection in `TaskParser` (`hasFoo`, `getFooFromLineText`), add to `convertTextToTodoistTaskObject`, pass it through `Task` interface in `cacheOperation.ts`, and wire it in `TodoistNewAPI.addTask()` / `updateTask()`.
-2. **New setting**: Add to `AnotherSimpleTodoistSyncSettings` interface and `DefaultAppSettings` in `settings.ts`, then add the UI control in `AnotherSimpleTodoistSyncPluginSettingTab.display()`.
+2. **New setting**: Add to `AnotherSimpleTodoistSyncSettings` interface and `DefaultAppSettings` in `settings.ts`, then add the UI control as a definition item (a `render` callback building the `Setting` imperatively) inside the relevant group in `AnotherSimpleTodoistSyncPluginSettingTab.getSettingDefinitions()`.
 3. **New sync direction (Todoist→Obsidian)**: Implement in `TodoistSync.syncTodoistToObsidian()` using activity log events, then update the file via `FileOperation`.
 4. **New command with modal**: Follow the pattern in `importTaskModal.ts` — register the command in `main.ts` behind an experimental feature flag in `settings.ts`, implement the modal as a class extending `Modal`.
 

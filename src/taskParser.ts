@@ -358,10 +358,7 @@ export class TaskParser {
 		const regex_test = new RegExp(
 			`(${this.keywords_function("DUE_DATE")})`,
 		);
-		if(regex_test){
-			return true;
-		}
-		return false;
+		return regex_test.test(text);
 	}
 
 	//   Return true or false if the text has a due date
@@ -914,8 +911,6 @@ export class TaskParser {
 			}
 
 			const localTimeString = `${timeHourString}:${timeMinuteString}`;
-			console.log("Parsed local time string:", timeHourString, timeMinuteString);
-			console.log("Parsed local time string:", localTimeString);
 			return localTimeString;
 		} catch (error) {
 			console.error(

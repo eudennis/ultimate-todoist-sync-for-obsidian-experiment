@@ -2,6 +2,30 @@
 
 ## 2026-09-06
 
+### 0.8.2
+
+- Fixed `hasCalendarEmoji()` always returning `true` regardless of the line's actual content — it checked truthiness of the `RegExp` object itself instead of calling `.test(text)` on it. This caused a false "Task has calendar emoji trigger, but due date seems to be missing" warning to fire in the console for every synced task, including plain tasks with no date syntax at all.
+- Fixed a race condition where a task created via Enter-to-sync could get deleted from Todoist seconds later: `deletedTaskCheck()`/`fullTextNewTaskCheck()` read the file from disk via `vault.read()`, but the newly-inserted `tid` link only existed in the live editor buffer until Obsidian flushed it to disk. Both functions (and, in a follow-up, `fullTextModifiedTaskCheck()`) now prefer an already-open editor's live buffer over the on-disk copy for the same file. Added debug-mode logging around task create/update/delete/close/reopen to make this path traceable.
+- Fixed debug-mode logging being effectively invisible: `console.debug()` maps to Chromium DevTools' "Verbose" level, hidden by default, so every `debugMode`-gated log (including the startup version banner) was silently swallowed unless a user manually enabled Verbose in DevTools. Switched all debug-mode logging to `console.log()`.
+- Trimmed a per-file "reading X from Y" debug log that fired for every file in `fileMetadata` on every scheduled sync tick (hundreds of lines per cycle in a real vault), drowning out the actual create/update/delete action logs it was meant to support.
+- Downgraded the "Task id is using old format" log in `lineModifiedTaskCheck()`'s update branch from `console.error` to `console.warn`, matching its sibling check earlier in the same function — skipping updates for a pre-Unified-API numeric task id is expected behavior, not a failure.
+- Resolved the scorecard's SDK any-typing category: added real TypeScript types for Todoist API responses in `todoistAPI.ts` (tasks, projects, sections, user data, activity events), reusing the existing `Task`/`TodoistSection`/`TodoistUserData` types the rest of the codebase already relies on. This cleared all 120 `@typescript-eslint/no-unsafe-*`/`no-base-to-string` findings across the codebase — typing the API layer properly resolved most of the downstream findings in `syncModule.ts`, `settings.ts`, and `taskParser.ts` for free, since they'd been receiving `any` from these calls all along.
+- Along the way, fixed a few real gaps the typing surfaced:
+    - Three `catch` blocks in `main.ts` read `error.message` without checking `error instanceof Error` first.
+    - `new Notice("An error occurred:", error)` in `scheduledSynchronization()`'s top-level error handler was passing the caught error as `Notice`'s second argument — which is a display-duration number, not a message — so the error detail never actually reached the user. Now interpolated into the message text.
+    - Two now-redundant `as { path?: string }` casts in `syncModule.ts` (working around the untyped return before this fix) removed.
+- Resolved the scorecard's last remaining category: migrated the settings tab off the deprecated `PluginSettingTab.display()` API to the declarative `getSettingDefinitions()` API introduced in Obsidian 1.13.0, clearing `@typescript-eslint/no-deprecated` and `obsidianmd/settings-tab/prefer-setting-definitions`. Every existing setting keeps its exact imperative construction (buttons, debounced inputs, sliders, Notices, cache lookups) inside a `render` callback — nothing about how any individual setting behaves changed. What did change:
+    - Bumped `minAppVersion` from `1.2.3` to `1.13.0`, since the new API requires it. Users on an older Obsidian won't be able to update past this point.
+    - The five section headings became native declarative groups instead of standalone heading rows.
+    - Experimental-feature-gated settings (custom sync tag, alternative keywords, opacity slider, etc.) now use the new API's `visible` predicate instead of an `if` around the setting's construction; toggling "Experimental features" calls the new `refreshDomState()` instead of a full re-render.
+    - The Todoist account info section (name/timezone/language) can no longer `await` its fetch directly, since `getSettingDefinitions()` must be synchronous. It now paints instantly from the last cached value and updates in place once the live fetch resolves — no more blank flash while loading, and a fetch failure no longer aborts rendering the rest of the tab (previously a real risk, since the old `async display()` fetched this data before building any of the settings below it).
+
+### 0.8.1
+
+- Resolved two more categories from the community.obsidian.md scorecard:
+    - Bumped `minAppVersion` from `1.0.0` to `1.2.3` — the actual minimum required by `Setting`/`ButtonComponent`/`AbstractTextComponent`'s `setDisabled()`, used by the import-task modal and a few settings fields.
+    - Cleaned up console logging: converted 8 `console.log()` calls that were already gated behind the debug-mode setting to `console.debug()` (Obsidian's guidelines only allow `warn`/`error`/`debug`), and removed 2 leftover, ungated debug prints in `taskParser.ts` that fired unconditionally on every task time-parse.
+
 ### 0.8.0
 
 - Fixed moving a task to a different section throwing a 400 error — `moveTaskToAnotherSection()` was posting to the generic task-update endpoint instead of Todoist's dedicated `tasks/{id}/move` endpoint.

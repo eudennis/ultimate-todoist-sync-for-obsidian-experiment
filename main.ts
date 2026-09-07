@@ -129,7 +129,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 					await this.saveSettings();
 				} catch (error) {
 					console.error(
-						`An error occurred while check new task in line: ${error.message}`,
+						`An error occurred while check new task in line: ${error instanceof Error ? error.message : String(error)}`,
 					);
 					this.syncLock = false;
 				}
@@ -210,7 +210,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 						await this.saveSettings();
 					} catch (error) {
 						console.error(
-							`An error occurred while check new task in line: ${error.message}`,
+							`An error occurred while check new task in line: ${error instanceof Error ? error.message : String(error)}`,
 						);
 						this.syncLock = false;
 					}
@@ -270,7 +270,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 					this.syncLock = false;
 				} catch (error) {
 					console.error(
-						`An error occurred while modifying the file: ${error.message}`,
+						`An error occurred while modifying the file: ${error instanceof Error ? error.message : String(error)}`,
 					);
 					this.syncLock = false;
 				}
@@ -386,8 +386,8 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 
 	async loadSettings() {
 		try {
-			const data = await this.loadData();
-			this.settings = Object.assign({}, DefaultAppSettings, data);
+			const data = (await this.loadData()) as Partial<AnotherSimpleTodoistSyncSettings>;
+			this.settings = Object.assign({}, DefaultAppSettings, data) as AnotherSimpleTodoistSyncSettings;
 			this.settingsCache = this.normalizeSettingsForCompare(this.settings);
 			return true;
 		} catch (error) {
@@ -415,8 +415,8 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 
 	private normalizeSettingsForCompare(settings: AnotherSimpleTodoistSyncSettings): string {
 		try {
-			const copy = JSON.parse(JSON.stringify(settings));
-			const byId = (a: { id: string }, b: { id: string }) => (a.id > b.id ? 1 : -1);
+			const copy = JSON.parse(JSON.stringify(settings)) as AnotherSimpleTodoistSyncSettings;
+			const byId = (a: { id: string | number }, b: { id: string | number }) => (a.id > b.id ? 1 : -1);
 			if (copy.todoistTasksData) {
 				if (Array.isArray(copy.todoistTasksData.tasks)) {
 					copy.todoistTasksData.tasks.sort(byId);
@@ -716,7 +716,7 @@ export default class AnotherSimpleTodoistSync extends Plugin {
 			}
 		} catch (error) {
 			console.error("An error occurred:", error);
-			new Notice("An error occurred:", error);
+			new Notice(`An error occurred: ${error}`);
 			this.syncLock = false;
 		}
 	}
