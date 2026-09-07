@@ -17,6 +17,12 @@ export class App {
 		activeEditor: null,
 		getActiveViewOfType: vi.fn().mockReturnValue(null),
 	};
+	metadataCache = {
+		getFileCache: vi.fn().mockReturnValue(null),
+	};
+	fileManager = {
+		processFrontMatter: vi.fn().mockResolvedValue(undefined),
+	};
 }
 
 export class Modal {

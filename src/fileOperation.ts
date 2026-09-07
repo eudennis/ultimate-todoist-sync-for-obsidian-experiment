@@ -11,7 +11,7 @@ export class FileOperation {
 	}
 
 	// Complete a task to mark it as completed
-	async completeTaskInTheFile(taskId: string) {
+	async completeTaskInTheFile(taskId: string, completedDate?: string) {
 		// Get the task file path
 		const currentTask =
 			this.plugin.cacheOperation?.loadTaskFromCacheID(taskId);
@@ -36,7 +36,11 @@ export class FileOperation {
 				line.includes(taskId) &&
 				this.plugin.taskParser?.hasTodoistTag(line)
 			) {
-				lines[i] = line.replace("[ ]", "[x]");
+				let newLine = line.replace("[ ]", "[x]");
+				if (this.plugin.settings.enableCompletionDate && completedDate) {
+					newLine = `${newLine} ✅ ${completedDate}`;
+				}
+				lines[i] = newLine;
 				modified = true;
 				break;
 			}
@@ -74,7 +78,9 @@ export class FileOperation {
 				line.includes(taskId) &&
 				this.plugin.taskParser?.hasTodoistTag(line)
 			) {
-				lines[i] = line.replace(/- \[(x|X)\]/g, "- [ ]");
+				lines[i] = line
+					.replace(/- \[(x|X)\]/g, "- [ ]")
+					.replace(/\s*✅\s?\d{4}-\d{2}-\d{2}/, "");
 				modified = true;
 				break;
 			}

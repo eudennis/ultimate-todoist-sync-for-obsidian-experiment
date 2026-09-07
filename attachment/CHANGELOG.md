@@ -1,6 +1,11 @@
 ## CHANGELOG
 
-## 2026-09-06
+## 2026-09-07
+
+### 0.8.3
+
+- Added support for setting a note's default Todoist project via YAML frontmatter (`project: ProjectName`), behind the new "Project from note frontmatter" experimental setting (issue #48). When a task line declares no project of its own, the sync engine now falls back to the note's frontmatter before the plugin's default project setting. The existing "Set default project for current file" command now writes this frontmatter key directly (via Obsidian's `processFrontMatter` API) instead of an internal, invisible per-file setting, so the file's default project is visible and editable right in the note.
+- Added the Todoist completion date to a task line when a task is completed on Todoist and synced back into Obsidian, behind the new "Add completion date" experimental setting (issue #44). The date is appended in the Obsidian Tasks plugin's own format (`✅ YYYY-MM-DD`), sourced from the completion event's timestamp in Todoist's activity log. It's stripped from the task's `content` before change-detection compares it against the cached Todoist task, so it can never be mistaken for a content edit and re-pushed to Todoist; reopening the task (from Todoist) removes the marker again.
 
 ### 0.8.2
 
