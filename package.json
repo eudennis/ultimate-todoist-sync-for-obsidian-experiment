@@ -33,6 +33,9 @@
 		"vitest": "^4.1.8"
 	},
 	"dependencies": {
-		"@doist/todoist-sdk": "^10.3.0"
+		"@doist/todoist-sdk": "^10.5.1"
+	},
+	"overrides": {
+		"undici": "^7.29.0"
 	}
 }
