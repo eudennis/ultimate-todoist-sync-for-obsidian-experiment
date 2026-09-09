@@ -109,13 +109,7 @@ export class TodoistSync {
 			// If the taskId was not found within the file, delete it.
 			if (!currentFileValueWithOutFrontMatter?.includes(taskId)) {
 				try {
-					const api = this.plugin.todoistNewAPI?.initializeNewAPI();
-					if (!api) {
-						console.error("Failed to initialize Todoist API");
-						new Notice("Failed to initialize Todoist API");
-						return;
-					}
-					const response = await api.deleteTask(taskId);
+					const response = await this.plugin.todoistNewAPI?.deleteTask(taskId);
 
 					if (response) {
 						if (this.plugin.settings.debugMode) {
@@ -994,9 +988,8 @@ export class TodoistSync {
 		const deletedTaskIds = [];
 
 		for (const taskId of taskIds) {
-			const api = this.plugin.todoistNewAPI?.initializeNewAPI();
 			try {
-				const response = await api?.deleteTask(taskId);
+				const response = await this.plugin.todoistNewAPI?.deleteTask(taskId);
 
 				if (response) {
 					if (this.plugin.settings.debugMode) {

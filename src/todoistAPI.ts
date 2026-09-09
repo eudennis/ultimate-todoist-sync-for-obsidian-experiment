@@ -1,4 +1,3 @@
-import { TodoistApi } from "@doist/todoist-sdk";
 import type AnotherSimpleTodoistSync from "main";
 import type { App } from "obsidian";
 import { requestUrl } from "obsidian";
@@ -44,12 +43,6 @@ export class TodoistNewAPI {
 	constructor(app: App, plugin: AnotherSimpleTodoistSync) {
 		this.app = app;
 		this.plugin = plugin;
-	}
-
-	initializeNewAPI() {
-		const token = this.plugin.settings.todoistAPIToken;
-		const api = new TodoistApi(token);
-		return api;
 	}
 
 	async addTask({
@@ -451,6 +444,33 @@ export class TodoistNewAPI {
 				throw new Error(`Error updating task: ${error.message}`);
 			}
 			throw new Error("Unknown error occurred while updating task");
+		}
+	}
+
+	async deleteTask(taskId: string): Promise<boolean> {
+		const token = this.plugin.settings.todoistAPIToken;
+
+		if (!taskId) {
+			throw new Error("taskId is required");
+		}
+
+		try {
+			const response = await requestUrl({
+				url: `https://todoist.com/api/v1/tasks/${taskId}`,
+				method: "DELETE",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+			});
+
+			// According to the API docs, a successful delete returns 204 No Content
+			return response.status === 204;
+		} catch (error) {
+			if (error instanceof Error) {
+				throw new Error(`Error deleting task: ${error.message}`);
+			}
+			throw new Error("Unknown error occurred while deleting task");
 		}
 	}
 

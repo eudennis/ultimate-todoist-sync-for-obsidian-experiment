@@ -99,6 +99,37 @@ describe("TodoistNewAPI", () => {
 		});
 	});
 
+	describe("deleteTask", () => {
+		it("returns true on a 204 No Content", async () => {
+			vi.mocked(requestUrl).mockResolvedValueOnce({
+				status: 204,
+				json: {},
+				text: "",
+			} as never);
+			await expect(api.deleteTask("6cfCcrHfXrFP6q3R")).resolves.toBe(true);
+		});
+
+		it("returns false on a non-204 status", async () => {
+			vi.mocked(requestUrl).mockResolvedValueOnce({
+				status: 200,
+				json: {},
+				text: "",
+			} as never);
+			await expect(api.deleteTask("6cfCcrHfXrFP6q3R")).resolves.toBe(false);
+		});
+
+		it("throws when no taskId is given", async () => {
+			await expect(api.deleteTask("")).rejects.toThrow("taskId is required");
+		});
+
+		it("throws a wrapped error on a network failure", async () => {
+			vi.mocked(requestUrl).mockRejectedValueOnce(new Error("network down"));
+			await expect(api.deleteTask("6cfCcrHfXrFP6q3R")).rejects.toThrow(
+				"Error deleting task: network down",
+			);
+		});
+	});
+
 	describe("filterActivityEvents", () => {
 		const events = [
 			activityEventFixtures.itemAdded,
