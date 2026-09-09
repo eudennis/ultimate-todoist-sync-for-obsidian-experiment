@@ -116,6 +116,8 @@ export interface AnotherSimpleTodoistSyncSettings {
 	removeObsidianLinks: boolean;
 	enableImportFromTodoistLink: boolean;
 	tidOpacity: number;
+	enableFrontmatterProject: boolean;
+	enableCompletionDate: boolean;
 }
 
 export const DefaultAppSettings: Partial<AnotherSimpleTodoistSyncSettings> = {
@@ -148,6 +150,8 @@ export const DefaultAppSettings: Partial<AnotherSimpleTodoistSyncSettings> = {
 	removeObsidianLinks: false,
 	enableImportFromTodoistLink: true,
 	tidOpacity: 30,
+	enableFrontmatterProject: false,
+	enableCompletionDate: false,
 };
 
 export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
@@ -766,6 +770,44 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 											this.plugin.settings.tidOpacity = value;
 											void this.plugin.saveSettings();
 											this.plugin.applyTidOpacity();
+										}),
+								);
+						},
+					},
+					{
+						name: "Project from note frontmatter",
+						visible: () => this.plugin.settings.experimentalFeatures,
+						render: (setting) => {
+							setting
+								.setName("Project from note frontmatter")
+								.setDesc(
+									'When a task line declares no project (no matching #tag and no %%[p::ProjectName]%% comment), fall back to the `project:` key in the note\'s YAML frontmatter before using the default project. The "Set default project for current file" command writes to this frontmatter key.',
+								)
+								.addToggle((component) =>
+									component
+										.setValue(this.plugin.settings.enableFrontmatterProject)
+										.onChange((value) => {
+											this.plugin.settings.enableFrontmatterProject = value;
+											void this.plugin.saveSettings();
+										}),
+								);
+						},
+					},
+					{
+						name: "Add completion date",
+						visible: () => this.plugin.settings.experimentalFeatures,
+						render: (setting) => {
+							setting
+								.setName("Add completion date")
+								.setDesc(
+									"Add the Todoist completion date to the task line (Obsidian Tasks plugin ✅ yyyy-mm-dd format) when a task is completed on Todoist and synced back to Obsidian.",
+								)
+								.addToggle((component) =>
+									component
+										.setValue(this.plugin.settings.enableCompletionDate)
+										.onChange((value) => {
+											this.plugin.settings.enableCompletionDate = value;
+											void this.plugin.saveSettings();
 										}),
 								);
 						},

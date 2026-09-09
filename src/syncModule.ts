@@ -1028,7 +1028,13 @@ export class TodoistSync {
 			// Process unsynced events sequentially (for...of instead of Promise.allSettled keeps ordering)
 			const processedEvents = [];
 			for (const e of unSynchronizedEvents) {
-				await this.plugin.fileOperation?.completeTaskInTheFile(e.object_id);
+				const completedDate = e.event_date
+					? e.event_date.slice(0, 10)
+					: undefined;
+				await this.plugin.fileOperation?.completeTaskInTheFile(
+					e.object_id,
+					completedDate,
+				);
 				this.plugin.cacheOperation?.closeTaskToCacheByID(e.object_id);
 				new Notice(`Task ${e.object_id} is closed.`);
 				processedEvents.push(e);

@@ -1,3 +1,4 @@
+import { TFile } from "obsidian";
 import { describe, expect, it } from "vitest";
 import { TaskParser } from "../src/taskParser";
 import { lines } from "./fixtures/markdownLines";
@@ -10,6 +11,16 @@ function makeParser(settingsOverrides: Record<string, unknown> = {}) {
 		createMockApp() as never,
 		createMockPlugin(settingsOverrides) as never,
 	);
+}
+
+// Real TFile has an implicit 0-arg constructor (tsconfig.test.json type-checks
+// against the real obsidian types, not the mock's `constructor(path)`), so build
+// an instance via the prototype instead of `new TFile(path)`.
+function mockTFile(path: string): TFile {
+	const file = Object.create(TFile.prototype) as TFile;
+	file.path = path;
+	file.name = path.split("/").pop() ?? path;
+	return file;
 }
 
 describe("TaskParser", () => {
@@ -150,6 +161,13 @@ describe("TaskParser", () => {
 				"Task with tags",
 			);
 		});
+		it("strips a trailing completion date (issue #44)", () => {
+			expect(
+				makeParser().getTaskContentFromLineText(
+					"- [x] Buy groceries #tdsync ✅ 2026-01-28",
+				),
+			).toBe("Buy groceries");
+		});
 	});
 
 	describe("getAllTagsFromLineText", () => {
@@ -281,6 +299,21 @@ describe("TaskParser", () => {
 				parser.taskContentCompare({ content: "Buy milk" }, { content: "Buy eggs" }),
 			).toBe(false);
 		});
+		it("treats a completion-date marker as unchanged content (issue #44)", () => {
+			const parser = makeParser();
+			const withoutDate = parser.getTaskContentFromLineText(
+				"- [ ] Buy groceries #tdsync",
+			);
+			const withDate = parser.getTaskContentFromLineText(
+				"- [x] Buy groceries #tdsync ✅ 2026-01-28",
+			);
+			expect(
+				parser.taskContentCompare(
+					{ content: withoutDate },
+					{ content: withDate },
+				),
+			).toBe(true);
+		});
 		it("taskTagCompare matches regardless of order", () => {
 			const parser = makeParser();
 			expect(
@@ -351,6 +384,34 @@ describe("TaskParser", () => {
 					"- [ ] task %%[p::Work]%% #tdsync",
 				),
 			).toBe("Work");
+		});
+	});
+
+	describe("getProjectNameFromFrontmatter (issue #48)", () => {
+		it("returns undefined when no filepath is given", () => {
+			expect(makeParser().getProjectNameFromFrontmatter(undefined)).toBeUndefined();
+		});
+		it("returns undefined when the file can't be resolved", () => {
+			const app = createMockApp();
+			app.vault.getAbstractFileByPath.mockReturnValue(null);
+			const parser = new TaskParser(app as never, createMockPlugin() as never);
+			expect(parser.getProjectNameFromFrontmatter("note.md")).toBeUndefined();
+		});
+		it("returns undefined when the note has no `project` frontmatter key", () => {
+			const app = createMockApp();
+			app.vault.getAbstractFileByPath.mockReturnValue(mockTFile("note.md"));
+			app.metadataCache.getFileCache.mockReturnValue({ frontmatter: {} });
+			const parser = new TaskParser(app as never, createMockPlugin() as never);
+			expect(parser.getProjectNameFromFrontmatter("note.md")).toBeUndefined();
+		});
+		it("returns the trimmed project name from frontmatter", () => {
+			const app = createMockApp();
+			app.vault.getAbstractFileByPath.mockReturnValue(mockTFile("note.md"));
+			app.metadataCache.getFileCache.mockReturnValue({
+				frontmatter: { project: "  Work  " },
+			});
+			const parser = new TaskParser(app as never, createMockPlugin() as never);
+			expect(parser.getProjectNameFromFrontmatter("note.md")).toBe("Work");
 		});
 	});
 

@@ -1,6 +1,6 @@
 import type AnotherSimpleTodoistSync from "../main";
 import type { App } from "obsidian";
-import { Notice } from "obsidian";
+import { Notice, TFile } from "obsidian";
 import type { Task } from "./cacheOperation";
 export class TaskParser {
 	app: App;
@@ -117,6 +117,9 @@ export class TaskParser {
 		let project_name = this.getProjectNameFromCommentOnLineText(
 			textWithoutIndentation,
 		);
+		if (!project_name && this.plugin.settings.enableFrontmatterProject) {
+			project_name = this.getProjectNameFromFrontmatter(filepath) ?? "";
+		}
 		let sectionId: string | undefined | null;
 
 		const hasDuration = this.hasDuration(textWithoutIndentation);
@@ -515,6 +518,7 @@ export class TaskParser {
 			remove_space: /^\s+|\s+$/g,
 			remove_date: /((🗓️|📅|📆|🗓|@)\s?\d{2,4}-\d{1,2}-\d{1,2})/,
 			remove_time: /((⏰|⏲|\$)\s?\d{2}:\d{2})/,
+			remove_completion_date: /(✅\s?\d{4}-\d{2}-\d{2})/,
 			remove_inline_metadata: /%%\[\w+::\s*\w+\]%%/,
 			remove_checkbox: /^(-|\*)\s+\[(x|X| )\]\s/,
 			remove_checkbox_with_indentation: /^([ \t]*)?(-|\*)\s+\[(x|X| )\]\s/,
@@ -538,6 +542,7 @@ export class TaskParser {
 			.replace(regex_remove_rules.remove_tags, "")
 			.replace(regex_remove_rules.remove_date, "")
 			.replace(regex_remove_rules.remove_time, "")
+			.replace(regex_remove_rules.remove_completion_date, "")
 			.replace(regex_remove_rules.remove_checkbox, "")
 			.replace(regex_remove_rules.remove_checkbox_with_indentation, "")
 			.replace(regex_remove_rules.remove_space, "")
@@ -588,6 +593,24 @@ export class TaskParser {
 			.replace("]", "");
 
 		return project_raw;
+	}
+
+	// find the project name from the note's YAML frontmatter (`project:` key)
+	getProjectNameFromFrontmatter(filepath?: string): string | undefined {
+		if (!filepath) return undefined;
+		const file = this.app.vault.getAbstractFileByPath(filepath);
+		if (!(file instanceof TFile)) return undefined;
+		const frontmatterProject: unknown = this.app.metadataCache.getFileCache(
+			file,
+		)?.frontmatter?.project;
+		if (
+			typeof frontmatterProject !== "string" &&
+			typeof frontmatterProject !== "number"
+		) {
+			return undefined;
+		}
+		const projectName = String(frontmatterProject).trim();
+		return projectName || undefined;
 	}
 
 	//get checkbox status

@@ -1,6 +1,14 @@
 ## CHANGELOG
 
-## 2026-09-06
+## 2026-09-07
+
+### 0.8.3
+
+- Added support for setting a note's default Todoist project via YAML frontmatter (`project: ProjectName`), behind the new "Project from note frontmatter" experimental setting (issue #48). When a task line declares no project of its own, the sync engine now falls back to the note's frontmatter before the plugin's default project setting. The existing "Set default project for current file" command now writes this frontmatter key directly (via Obsidian's `processFrontMatter` API) instead of an internal, invisible per-file setting, so the file's default project is visible and editable right in the note.
+- Added the Todoist completion date to a task line when a task is completed on Todoist and synced back into Obsidian, behind the new "Add completion date" experimental setting (issue #44). The date is appended in the Obsidian Tasks plugin's own format (`✅ YYYY-MM-DD`), sourced from the completion event's timestamp in Todoist's activity log. It's stripped from the task's `content` before change-detection compares it against the cached Todoist task, so it can never be mistaken for a content edit and re-pushed to Todoist; reopening the task (from Todoist) removes the marker again.
+- Resolved the scorecard's `form-data`/`undici` dependency vulnerability advisory: bumped `@doist/todoist-sdk` from `^10.3.0` to `^10.5.1` (ships a patched `form-data@4.0.6`) and added a `package.json` `overrides` entry pinning `undici` to `^7.29.0`, since the SDK itself doesn't bump its bundled `undici` past the vulnerable `7.0.0–7.28.0` range until a much later major version (`14.2.0`) that isn't a drop-in upgrade.
+- Reviewed the scorecard's "unnecessary console logging" flag (14 sites in `main.ts`/`syncModule.ts`/`todoistAPI.ts`): confirmed every flagged call is already gated behind the `debugMode` setting, so none log in normal operation. Left as `console.log` — intentionally, since a prior release (0.8.2) already moved off `console.debug` because it's hidden by default in DevTools, which made debug mode look broken. No code change.
+- Reviewed the scorecard's "direct filesystem access" flag: already resolved in 0.8.0 by stubbing out `@doist/todoist-sdk`'s unused upload module. No code change.
 
 ### 0.8.2
 
