@@ -1,5 +1,12 @@
 ## CHANGELOG
 
+## 2026-09-09
+
+### 0.8.4
+
+- Fixed deleting a task from Obsidian correctly deleting it from Todoist but then spamming `Uncaught TypeError: fastNowTimeout.unref is not a function` indefinitely in the console. `TodoistNewAPI` wraps every Todoist operation in a hand-rolled `requestUrl` call except `deleteTask`, which had no such method — so both delete call sites (`deletedTaskCheck`, `deleteTasksByIds`) fell back to the raw `@doist/todoist-sdk` client, the only code path that ever exercised the SDK's real network layer (`undici`). Undici's connection-pool keepalive timer calls `.unref()` on the result of the global `setTimeout`; in Obsidian's Electron renderer, that resolves to the browser's `setTimeout` (returns a number, no `.unref()`), so the timer crashed and re-armed itself every tick, forever.
+- Added a `requestUrl`-based `deleteTask()` to `TodoistNewAPI`, matching the existing `closeTask`/`openTask` pattern, and pointed both call sites at it. Since that was the SDK's only remaining use anywhere in the codebase, removed `@doist/todoist-sdk` entirely — along with the esbuild upload-stub workaround and its node-builtins externalization (both existed solely because of the SDK) and the now-dead SDK mock/vitest alias. `main.js` shrinks from ~2.3MB to ~190KB as a result; no other sync behavior changes.
+
 ## 2026-09-07
 
 ### 0.8.3
