@@ -21,7 +21,7 @@ This is a fork of [Ultimate Todoist Sync for Obsidian](https://github.com/HeroBl
 - **Build tool**: esbuild (via `npm_scripts/esbuild.config.mjs`)
 - **Bundler entry**: `main.ts` → compiles to `main.js`
 - **Obsidian API**: `obsidian` npm package
-- **Todoist SDK**: `@doist/todoist-sdk` (Unified API)
+- **Todoist API**: no SDK — every call is a hand-rolled `requestUrl` request against Todoist's Unified API (`todoistAPI.ts`); the plugin has no production dependencies
 - **Type checking**: `tsc -noEmit` (strict, no emit)
 - **Min Obsidian version**: 1.13.0
 
@@ -35,7 +35,7 @@ src/
   settings.ts            # Settings interface, defaults, and PluginSettingTab UI
   taskParser.ts          # Parses Obsidian markdown task lines into Todoist task objects
   syncModule.ts          # Core sync logic (Obsidian ↔ Todoist)
-  todoistAPI.ts          # Wraps @doist/todoist-sdk for all Todoist API calls
+  todoistAPI.ts          # All Todoist API calls, via Obsidian's requestUrl (no SDK)
   cacheOperation.ts      # Reads/writes plugin data (tasks, projects, sections, file metadata)
   fileOperation.ts       # Modifies Obsidian files (check/uncheck tasks, insert links/dates)
   modal.ts               # Modal for "Set default project for current file" command
@@ -46,7 +46,7 @@ npm_scripts/
   build-local.mjs        # Builds and copies output to LocalBuild/ for local testing
   bump-patch.mjs         # Bumps patch version in manifest.json after a production build
 tests/                   # Vitest unit tests (see "Testing")
-  __mocks__/             # Hand-written mocks for `obsidian` and `@doist/todoist-sdk`
+  __mocks__/             # Hand-written mock for `obsidian`
   fixtures/              # Sample markdown lines, Todoist tasks, activity events
   helpers/mockPlugin.ts  # createMockPlugin / createMockApp factories
   setup.ts               # Forces TZ=UTC for deterministic date/time tests
@@ -166,12 +166,11 @@ Orchestrates sync operations:
 - `lineModifiedTaskCheck()` — checks a specific line for modifications (on cursor leave)
 
 ### `TodoistNewAPI` (`src/todoistAPI.ts`)
-Wraps `@doist/todoist-sdk`. Key methods:
-- `initializeNewAPI()` — returns a `TodoistApi` instance from the stored token
-- `addTask()`, `updateTask()`, `deleteTask()`, `closeTask()`, `reopenTask()`
+Every method is a hand-rolled `requestUrl` call against Todoist's Unified API — no SDK. Key methods:
+- `addTask()`, `updateTask()`, `deleteTask()`, `closeTask()`, `openTask()`, `moveTaskToAnotherSection()`
 - `getTaskById(taskId)` — fetches a single task by ID (used by import modal); uses `throw: false` so the full error body is available on 4xx
 - `getUserResource()` — fetches user profile (email, timezone, language)
-- `getActivityLog()` — fetches Todoist events (used for Todoist→Obsidian sync)
+- `getNonObsidianAllActivityEvents()` — fetches Todoist events (used for Todoist→Obsidian sync)
 
 ### `CacheOperation` (`src/cacheOperation.ts`)
 Reads/writes the `settings` data store. Manages:
@@ -245,10 +244,10 @@ Run with `npm test` (`vitest run`), `npm run test:watch`, or `npm run test:cover
 
 - **Runner**: Vitest (chosen over Jest because the project is ESNext/`isolatedModules` and Vitest uses esbuild — the same transform as the production build — with no extra transpilers).
 - **Location**: all suites live in `tests/`, one `*.test.ts` per covered module.
-- **Mocks** (`tests/__mocks__/`): `obsidian` and `@doist/todoist-sdk` have no usable runtime in Node, so they are aliased to hand-written stubs via `vitest.config.ts` `resolve.alias`. `TodoistNewAPI` calls `requestUrl` imported from `obsidian` directly, so the obsidian mock exports it as a `vi.fn()`; tests drive it with `vi.mocked(requestUrl).mockResolvedValueOnce(...)` / `mockRejectedValueOnce(...)`.
+- **Mocks** (`tests/__mocks__/`): `obsidian` has no usable runtime in Node, so it's aliased to a hand-written stub via `vitest.config.ts` `resolve.alias`. `TodoistNewAPI` calls `requestUrl` imported from `obsidian` directly, so the obsidian mock exports it as a `vi.fn()`; tests drive it with `vi.mocked(requestUrl).mockResolvedValueOnce(...)` / `mockRejectedValueOnce(...)`.
 - **Helpers** (`tests/helpers/mockPlugin.ts`): `createMockPlugin()` / `createMockApp()` build the minimal `plugin`/`app` shapes the modules reach into. `createMockPlugin` spreads `DefaultAppSettings` (so `alternativeKeywords` defaults to `true`, `customSyncTag` to `#tdsync`) — override per test, e.g. `createMockPlugin({ alternativeKeywords: false })`.
 - **Determinism**: `tests/setup.ts` sets `process.env.TZ = "UTC"` so `Intl`/`Date`-based code (`ISOStringToLocalClockTimeString`, `ImportTaskFromTodoistModal.extractTime`) is stable in CI.
-- **Type-checking**: `tsconfig.test.json` type-checks the test files against the **real** obsidian/SDK types (the runtime mocks are aliased only by Vitest, not by tsc). The production build's `tsc` excludes `tests/`. Run `npx tsc -p tsconfig.test.json --noEmit` to type-check tests.
+- **Type-checking**: `tsconfig.test.json` type-checks the test files against the **real** obsidian types (the runtime mock is aliased only by Vitest, not by tsc). The production build's `tsc` excludes `tests/`. Run `npx tsc -p tsconfig.test.json --noEmit` to type-check tests.
 - **Covered**: `taskParser` (markdown parsing — the highest-value, near-pure logic), `cacheOperation` (in-memory cache/metadata), `importTaskModal` (URL parsing, priority inversion, line formatting; private methods are reached via `(modal as any).method()`), `todoistAPI` (request-payload assembly and `filterActivityEvents`).
 - **Out of scope** (need a full Obsidian/integration environment, not unit-tested): `main.ts`, `syncModule.ts`, `fileOperation.ts`.
 
