@@ -238,7 +238,8 @@ export class TodoistSync {
 				await this.plugin.saveSettings();
 
 				// Append Todoist ID to the task line
-				const text_with_out_link = `${currentLineText}`;
+				const text_with_out_link =
+					this.plugin.taskParser?.addCurrentDateToLineText(currentLineText) ?? currentLineText;
 				let link: string;
 				if (this.plugin.settings.linksAppURI) {
 					link = `%%[tid:: [${todoist_id}](todoist://task?id=${newTask.id})]%%`;
@@ -409,7 +410,8 @@ export class TodoistSync {
 					await this.plugin.saveSettings();
 
 					// Append Todoist ID to the task line
-					const text_with_out_link = `${line}`;
+					const text_with_out_link =
+						this.plugin.taskParser?.addCurrentDateToLineText(line) ?? line;
 					let link: string;
 					if (this.plugin.settings.linksAppURI) {
 						link = `%%[tid:: [${todoist_id}](todoist://task?id=${newTask.id})]%%`;

@@ -163,15 +163,6 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 	}
 
 	getSettingDefinitions(): SettingDefinitionItem[] {
-		const myProjectsOptions: Record<string, string> =
-			this.plugin.settings.todoistTasksData?.projects?.results?.reduce(
-				(obj: Record<string, string>, item: TodoistProject) => {
-					obj[item.id.toString()] = item.name;
-					return obj;
-				},
-				{},
-			) ?? {};
-
 		// Debounces the sync interval value, to avoid triggering while the user is still typing
 		const debouncedSyncSave = debounce(
 			(sync_interval: number) => {
@@ -327,6 +318,18 @@ export class AnotherSimpleTodoistSyncPluginSettingTab extends PluginSettingTab {
 					{
 						name: "Default project",
 						render: (setting) => {
+							// Read the project cache on every render: Obsidian keeps the
+							// definitions from addSettingTab(), which runs before the
+							// projects are fetched, so a list built outside render would
+							// only show the projects known at startup.
+							const myProjectsOptions: Record<string, string> =
+								this.plugin.settings.todoistTasksData?.projects?.results?.reduce(
+									(obj: Record<string, string>, item: TodoistProject) => {
+										obj[item.id.toString()] = item.name;
+										return obj;
+									},
+									{},
+								) ?? {};
 							setting
 								.setName("Default project")
 								.setDesc(

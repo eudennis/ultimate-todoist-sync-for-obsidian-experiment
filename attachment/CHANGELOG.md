@@ -1,5 +1,15 @@
 ## CHANGELOG
 
+## 2026-09-30
+
+### 0.8.5
+
+- Fixed a task with a time but no date (`⏰HH:MM`) corrupting its line. Before, the date never appeared and part of the line was duplicated after the tid link. The parser wrote today's date to disk with `vault.modify` while the new-task check wrote the tid link through the editor, and the two edits collided. The date is now inserted in the same edit as the tid link. It also uses the local date instead of UTC, so it's no longer a day off near midnight.
+- Fixed the "Default project" dropdown in settings only listing projects known when the plugin loaded. Obsidian keeps the setting definitions built at `addSettingTab()`, which runs before projects are fetched. The list is now read from the project cache every time the tab renders.
+- Added a warning for Todoist Pro features on a free account. A `{{deadline}}` used to make Todoist reject the whole task (`403 PREMIUM_ONLY`), and it was never created. Now the plugin retries without the deadline and shows a Notice. Todoist silently drops a `⏳` duration on the free plan; the plugin now detects that and shows a Notice too. Each warning shows once per task per session.
+- Added an end-to-end test suite (`e2e/`, see `e2e/README.md`). It drives real Obsidian against a dedicated throwaway Todoist account, and a self-hosted CI workflow (`.github/workflows/e2e.yml`) runs it: smoke tests on same-repo PRs, the full matrix on release tags. The three plugin bugs above came out of its first full run. Behaviour the plugin doesn't implement yet is tracked as expected failures ("known gaps").
+- e2e: Todoist Pro tests (duration, deadlines) run only with `E2E_PREMIUM=1`. On a free account, new tests check the warnings above instead. Failure reports (request logs, plugin settings, console logs) are scrubbed of the account's API token and email addresses before they're written, because CI uploads them as downloadable artifacts.
+
 ## 2026-09-09
 
 ### 0.8.4

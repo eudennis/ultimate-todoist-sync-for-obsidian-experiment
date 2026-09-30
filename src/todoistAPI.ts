@@ -1,6 +1,6 @@
 import type AnotherSimpleTodoistSync from "main";
-import type { App } from "obsidian";
-import { requestUrl } from "obsidian";
+import type { App, RequestUrlResponse } from "obsidian";
+import { Notice, requestUrl } from "obsidian";
 import type { Task } from "./cacheOperation";
 import type { TodoistSection, TodoistUserData } from "./settings";
 
@@ -32,6 +32,28 @@ type TodoistApiProject = {
 	name: string;
 };
 
+// Fields sent when creating or updating a task.
+type TaskPayload = {
+	content?: string;
+	description?: string;
+	project_id?: string;
+	section_id?: string;
+	parent_id?: string;
+	order?: number;
+	labels?: string[];
+	priority?: number;
+	due_date?: string;
+	due_string?: string;
+	due_datetime?: string;
+	duration?: number;
+	duration_unit?: string;
+	deadline_date?: string;
+};
+
+// Todoist Pro features the plugin can send. On a free account Todoist rejects
+// a deadline with 403 PREMIUM_ONLY and silently drops a duration.
+type PremiumFeature = "deadline" | "duration";
+
 type ProjectsListResponse =
 	| TodoistApiProject[]
 	| { results?: TodoistApiProject[]; projects?: TodoistApiProject[]; next_cursor?: string };
@@ -40,9 +62,81 @@ export class TodoistNewAPI {
 	app: App;
 	plugin: AnotherSimpleTodoistSync;
 
+	// Premium warnings already shown this session, keyed by feature + task, so a
+	// line that is re-checked on every sync doesn't repeat the same notice.
+	private shownPremiumWarnings = new Set<string>();
+
 	constructor(app: App, plugin: AnotherSimpleTodoistSync) {
 		this.app = app;
 		this.plugin = plugin;
+	}
+
+	private warnPremiumFeature(feature: PremiumFeature, taskLabel: string) {
+		const key = `${feature}:${taskLabel}`;
+		if (this.shownPremiumWarnings.has(key)) {
+			return;
+		}
+		this.shownPremiumWarnings.add(key);
+		const featureName = feature === "deadline" ? "Deadlines" : "Task durations";
+		const message = `${featureName} require a Todoist Pro plan. "${taskLabel}" was synced to Todoist without its ${feature}.`;
+		console.warn(message);
+		new Notice(message, 10000);
+	}
+
+	private static errorBody(response: RequestUrlResponse): { error?: string; error_tag?: string } | undefined {
+		try {
+			return response.json as { error?: string; error_tag?: string };
+		} catch {
+			return undefined;
+		}
+	}
+
+	/**
+	 * POSTs a task create/update. If Todoist rejects a deadline as premium-only,
+	 * warns the user and retries without it; if it drops a requested duration,
+	 * warns as well. Returns null when nothing is left to send after removing
+	 * the deadline.
+	 */
+	private async postTask(url: string, taskData: TaskPayload, taskLabel: string): Promise<Task | null> {
+		const send = () =>
+			requestUrl({
+				url,
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${this.plugin.settings.todoistAPIToken}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(taskData),
+				throw: false,
+			});
+
+		let response = await send();
+		let body = response.status >= 400 ? TodoistNewAPI.errorBody(response) : undefined;
+
+		if (response.status === 403 && body?.error_tag === "PREMIUM_ONLY") {
+			if (!taskData.deadline_date) {
+				new Notice(`Todoist rejected "${taskLabel}": ${body.error ?? "premium only feature"}.`, 10000);
+			} else {
+				this.warnPremiumFeature("deadline", taskLabel);
+				delete taskData.deadline_date;
+				if (!Object.values(taskData).some((value) => value !== undefined)) {
+					return null;
+				}
+				response = await send();
+				body = response.status >= 400 ? TodoistNewAPI.errorBody(response) : undefined;
+			}
+		}
+
+		if (response.status >= 400) {
+			const detail = body ? JSON.stringify(body) : `status ${response.status}`;
+			throw new Error(`API returned error status ${response.status}: ${detail}`);
+		}
+
+		const task = response.json as Task;
+		if (taskData.duration && !task?.duration) {
+			this.warnPremiumFeature("duration", taskLabel);
+		}
+		return task;
 	}
 
 	async addTask({
@@ -75,21 +169,7 @@ export class TodoistNewAPI {
 		deadline_date?: string;
 	}): Promise<Task | false> {
 		try {
-			const taskData: {
-				content: string;
-				description?: string;
-				project_id?: string;
-				section_id?: string;
-				parent_id?: string;
-				order?: number;
-				labels?: string[];
-				priority?: number;
-				due_date?: string;
-				due_datetime?: string;
-				duration?: number;
-				duration_unit?: string;
-				deadline_date?: string;
-			} = {
+			const taskData: TaskPayload = {
 				content,
 				description,
 				project_id,
@@ -142,18 +222,9 @@ export class TodoistNewAPI {
 			}
 
 
-			const token = this.plugin.settings.todoistAPIToken;
 			try {
-				const response = await requestUrl({
-					url: "https://todoist.com/api/v1/tasks",
-					method: "POST",
-					headers: {
-						Authorization: `Bearer ${token}`,
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify(taskData),
-				});
-				return response.json as Task;
+				const task = await this.postTask("https://todoist.com/api/v1/tasks", taskData, content);
+				return task ?? false;
 			} catch (error) {
 				console.error("Error adding task:", error);
 				return false;
@@ -329,9 +400,7 @@ export class TodoistNewAPI {
 			section_id?: string;
 			deadline_date?: string;
 		},
-	): Promise<Task> {
-		const token = this.plugin.settings.todoistAPIToken;
-
+	): Promise<Task | undefined> {
 		if (!taskId) {
 			throw new Error("taskId is required");
 		}
@@ -353,20 +422,7 @@ export class TodoistNewAPI {
 		}
 
 		try {
-			const taskData: {
-				content?: string;
-				description?: string;
-				labels?: string[];
-				priority?: number;
-				parent_id?: string;
-				section_id?: string;
-				due_date?: string;
-				due_string?: string;
-				due_datetime?: string;
-				duration?: number;
-				duration_unit?: string;
-				deadline_date?: string;
-			} = {};
+			const taskData: TaskPayload = {};
 
 			// Handle content updates
 			if (updates.content) {
@@ -423,22 +479,14 @@ export class TodoistNewAPI {
 				console.log("Todoist Task data to be updated: ", taskData);
 			}
 
-			const response = await requestUrl({
-				url: `https://todoist.com/api/v1/tasks/${taskId}`,
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(taskData),
-			});
-
-			if (response.status >= 400) {
-				throw new Error(`API returned error status: ${response.status}`);
-			}
-
-			const updatedTask = response.json as Task;
-			return updatedTask;
+			const taskLabel =
+				updates.content ?? this.plugin.cacheOperation?.loadTaskFromCacheID(taskId)?.content ?? taskId;
+			const updatedTask = await this.postTask(
+				`https://todoist.com/api/v1/tasks/${taskId}`,
+				taskData,
+				taskLabel,
+			);
+			return updatedTask ?? undefined;
 		} catch (error) {
 			if (error instanceof Error) {
 				throw new Error(`Error updating task: ${error.message}`);

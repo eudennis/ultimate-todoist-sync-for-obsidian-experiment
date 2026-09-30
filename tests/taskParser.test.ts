@@ -421,6 +421,24 @@ describe("TaskParser", () => {
 				"- [ ] Sub-task #tdsync",
 			);
 		});
+		it("addCurrentDateToLineText inserts today's local date before a time-only due time", () => {
+			const parser = makeParser();
+			const today = parser.getTodayLocalDateString();
+			expect(parser.addCurrentDateToLineText("- [ ] task ⏰9:15 #tdsync")).toBe(
+				`- [ ] task 🗓️${today} ⏰9:15 #tdsync`,
+			);
+			// Alternative keyword `$` is normalised to ⏰ like before.
+			expect(parser.addCurrentDateToLineText("- [ ] task $21:15 #tdsync")).toBe(
+				`- [ ] task 🗓️${today} ⏰21:15 #tdsync`,
+			);
+		});
+		it("addCurrentDateToLineText leaves lines with a date, or without a time, unchanged", () => {
+			const parser = makeParser();
+			const withDate = "- [ ] task 📅2025-06-01 ⏰14:30 #tdsync";
+			const noTime = "- [ ] task #tdsync";
+			expect(parser.addCurrentDateToLineText(withDate)).toBe(withDate);
+			expect(parser.addCurrentDateToLineText(noTime)).toBe(noTime);
+		});
 		it("addTodoistTag appends the sync tag", () => {
 			expect(makeParser().addTodoistTag("- [ ] plain")).toBe(
 				"- [ ] plain #tdsync",
