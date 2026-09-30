@@ -1,0 +1,17 @@
+{
+	"name": "asts-e2e",
+	"private": true,
+	"description": "End-to-end tests for Another Simple Todoist Sync: real Obsidian + real Todoist",
+	"scripts": {
+		"test:e2e": "playwright test",
+		"test:smoke": "playwright test --grep @smoke",
+		"check:harness": "playwright test -c harness-check/harness.config.ts",
+		"typecheck": "tsc --noEmit",
+		"report": "playwright show-report results/latest/html"
+	},
+	"devDependencies": {
+		"@playwright/test": "1.63.0",
+		"@types/node": "^22.19.19",
+		"typescript": "~5.7"
+	}
+}

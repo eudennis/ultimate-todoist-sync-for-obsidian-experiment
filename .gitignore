@@ -40,3 +40,6 @@ LocalBuild/
 
 # Test coverage output
 coverage/
+
+# Local handoff notes
+E2E_HANDOFF.md
