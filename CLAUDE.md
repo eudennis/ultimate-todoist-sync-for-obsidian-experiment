@@ -264,7 +264,7 @@ A separate Playwright package that launches **real Obsidian** (attached over CDP
 - Todoist Pro features (duration, deadlines) are tested only with `E2E_PREMIUM=1` (the account must be on Pro); by default they're skipped and free-plan tests assert the plugin's "requires a Todoist Pro plan" warning instead.
 - Each run writes `e2e/results/<timestamp>-v<version>/summary.md` (+ HTML/JSON reports, failure artifacts) and appends to `history.csv`.
 - Unimplemented behaviour is written as `test.fail(...)` ("known gap"); if one starts passing the run fails with UNEXPECTED PASS — remove the marker.
-- CI: `.github/workflows/e2e.yml` on a self-hosted runner — smoke on same-repo PRs, full on release-tag pushes / manual dispatch.
+- Local only: there is deliberately no CI workflow for it — whoever develops the plugin runs it on their own machine.
 - `e2e/` is excluded from the root `tsconfig.json` and ESLint; it type-checks with `npm run typecheck --prefix e2e`.
 
 When changing user-visible sync behaviour, add or update the matching `e2e/tests/*.spec.ts` test (and flip a `test.fail` marker if you implement a known gap).

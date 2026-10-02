@@ -11,7 +11,6 @@ It complements the Vitest unit tests at the repo root (`npm test`). Those check 
 - [Reading the results](#results)
 - [How the harness works](#how-it-works)
 - [Coverage and known gaps](#coverage)
-- [CI (self-hosted runner)](#ci)
 
 <a id="safety"></a>
 ## Safety: your own vaults and Todoist data
@@ -51,7 +50,7 @@ cd e2e && xvfb-run -a npm run check:harness
 <a id="environment-variables"></a>
 ## Environment variables
 
-Put these in `e2e/.env` (gitignored). CI supplies them as secrets or variables instead. Real environment variables take precedence over `.env`.
+Put these in `e2e/.env` (gitignored). Real environment variables take precedence over `.env`.
 
 | Variable | Required | Meaning |
 |---|---|---|
@@ -63,7 +62,7 @@ Put these in `e2e/.env` (gitignored). CI supplies them as secrets or variables i
 | `E2E_OBSIDIAN_BIN` | no | Obsidian executable. Default: `/opt/Obsidian/obsidian`, then `which obsidian` |
 | `E2E_SKIP_BUILD` | no | `1`: test the existing `main.js` instead of rebuilding |
 | `E2E_KEEP_WORK` | no | `1`: keep each test's vault under `e2e/.work/` even when it passes. Failed tests' vaults are always kept |
-| `E2E_RETRIES` | no | Retries per failed test (default 0 locally, 1 in CI). A test that passes on retry shows as ⚠️ FLAKY |
+| `E2E_RETRIES` | no | Retries per failed test (default 0). A test that passes on retry shows as ⚠️ FLAKY |
 | `E2E_HISTORY_FILE` | no | Where to append the per-run history line. Default: `e2e/results/history.csv` |
 
 The vault path is not configurable on purpose: every test builds its own vault under `e2e/.work/`.
@@ -117,7 +116,7 @@ src/obsidianInstall.ts   picks the Obsidian binary and the app package (asar) un
 src/todoist.ts           Todoist API v1 client (fetch, retries on 429/5xx)
 src/helpers.ts           waitFor / syncUntil polling, date helpers, tid parsing
 src/globalSetup.ts       account guard, stale-resource sweep, activity-log probe, plugin build
-src/summaryReporter.ts   summary.md, history.csv, $GITHUB_STEP_SUMMARY
+src/summaryReporter.ts   summary.md, history.csv
 harness-check/           Todoist-free self-test of the UI automation
 ```
 
@@ -158,23 +157,3 @@ Known gaps found while writing the suite (🟡 in reports):
 Skipped (`test.fixme`): reminders in either direction, because the plugin has no reminder syntax or markdown representation to assert against.
 
 Skipped unless `E2E_PREMIUM=1`: duration (`⏳`) and deadline (`{{…}}`) sync, and the duration half of the alternative-keywords test. On a free account the "free Todoist plan" tests run instead. They check that the task is still created and that the plugin shows a "requires a Todoist Pro plan" notice. Those tests are skipped when the account is on Pro.
-
-<a id="ci"></a>
-## CI (self-hosted runner)
-
-`.github/workflows/e2e.yml` runs on a runner labelled `self-hosted, linux, obsidian-e2e`:
-
-| Trigger | Suite |
-|---|---|
-| Pull request from a branch in this repo | smoke (`@smoke`) |
-| Pull request from a fork | **not run**: the runner holds the Todoist secret |
-| Push of a release tag (`*.*.*`, same pattern as `release.yml`) | full matrix |
-| Manual "Run workflow" | full or smoke (choice) |
-
-Runs are serialized (`concurrency: e2e-todoist-account`) because they share one Todoist account. The job runs `check:harness` first, then the suite under `xvfb-run`. The pass/fail table appears on the run's Summary page. `summary.md`, `results.json` and the history file are uploaded on every run, and the full report (HTML, screenshots, logs) is uploaded when the run fails.
-
-Runner setup: follow [One-time setup](#setup) steps 1–3 on the runner machine, register it with the `obsidian-e2e` label, then add:
-- Repository **secrets**: `TODOIST_E2E_TOKEN`, `TODOIST_E2E_EXPECTED_EMAIL`
-- Repository **variables** (optional): `E2E_OBSIDIAN_VERSION` (recommended, pins the tested version), `E2E_PREMIUM` (`1` if the account is on Todoist Pro), and `E2E_HISTORY_FILE`, a path outside the workspace such as `/var/lib/asts-e2e/history.csv`, so history accumulates across runs
-
-Note: the tag-triggered run happens in parallel with `release.yml`, so it reports on a release but doesn't block it. To make it a hard gate, run the full suite via "Run workflow" on the release commit before pushing the tag, or add this job to `release.yml` as a `needs:` dependency.

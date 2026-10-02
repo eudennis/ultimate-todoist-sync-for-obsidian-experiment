@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 
 // Loads e2e/.env (gitignored) once, without overriding variables already set
-// in the environment (CI secrets win over a stray local file).
+// in the environment.
 export const E2E_ROOT = path.resolve(__dirname, "..");
 export const REPO_ROOT = path.resolve(E2E_ROOT, "..");
 
@@ -53,8 +53,8 @@ export function todoistToken(): string {
 
 /**
  * Removes the account's API token and any email address from text bound for a
- * report. Reports end up in CI artifacts, which anyone with read access to the
- * repository can download. Todoist's /user response, for one, includes both.
+ * report, so failure artifacts are safe to share (e.g. attached to an issue).
+ * Todoist's /user response, for one, includes both.
  */
 export function redactSecrets(text: string): string {
 	const token = process.env.TODOIST_E2E_TOKEN;

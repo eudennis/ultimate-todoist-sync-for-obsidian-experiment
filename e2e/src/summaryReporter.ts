@@ -6,7 +6,6 @@ import { E2E_ROOT, PLUGIN_MANIFEST } from "./env";
 // Writes, per run:
 //   results/<run>/summary.md   — versions, totals, one row per test, links to failure artifacts
 //   results/history.csv        — one line per run (override with E2E_HISTORY_FILE)
-//   $GITHUB_STEP_SUMMARY       — the same summary, when running in GitHub Actions
 // and points results/latest at the run folder.
 
 type Outcome = "PASS" | "FAIL" | "TIMEOUT" | "SKIP" | "KNOWN GAP" | "UNEXPECTED PASS" | "FLAKY";
@@ -102,11 +101,6 @@ export default class SummaryReporter implements Reporter {
 		];
 		const summary = md.join("\n");
 		fs.writeFileSync(path.join(runDir, "summary.md"), summary);
-
-		if (process.env.GITHUB_STEP_SUMMARY) {
-			// Artifact links are relative to the run folder, meaningless on the Actions page.
-			fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")}\n`);
-		}
 
 		const historyFile = process.env.E2E_HISTORY_FILE ?? path.join(E2E_ROOT, "results", "history.csv");
 		fs.mkdirSync(path.dirname(historyFile), { recursive: true });
