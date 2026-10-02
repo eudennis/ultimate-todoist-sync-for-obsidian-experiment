@@ -63,6 +63,89 @@ describe("TodoistNewAPI", () => {
 		});
 	});
 
+	describe("premium-only features on a free Todoist account", () => {
+		const base = { project_id: "proj-123", content: "Test task" };
+		// What Todoist returns for a deadline on a free plan.
+		const premiumOnly = {
+			status: 403,
+			json: {
+				error: "Deadlines are a premium only feature",
+				error_code: 32,
+				error_tag: "PREMIUM_ONLY",
+				http_code: 403,
+			},
+			text: "",
+		};
+		const bodyOf = (call: number) =>
+			JSON.parse((vi.mocked(requestUrl).mock.calls[call][0] as { body: string }).body);
+
+		it("addTask retries without the deadline and warns the user", async () => {
+			const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+			vi.mocked(requestUrl)
+				.mockResolvedValueOnce(premiumOnly as never)
+				.mockResolvedValueOnce({ status: 200, json: { id: "t1", content: "Test task" }, text: "" } as never);
+
+			await expect(api.addTask({ ...base, deadline_date: "2025-12-31" })).resolves.toMatchObject({ id: "t1" });
+			expect(bodyOf(0).deadline_date).toBe("2025-12-31");
+			expect(bodyOf(1)).not.toHaveProperty("deadline_date");
+			expect(warn).toHaveBeenCalledWith(expect.stringContaining("Deadlines require a Todoist Pro plan"));
+		});
+
+		it("addTask warns when Todoist drops a requested duration", async () => {
+			const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+			vi.mocked(requestUrl).mockResolvedValueOnce({
+				status: 200,
+				json: { id: "t1", content: "Test task", duration: null },
+				text: "",
+			} as never);
+
+			await api.addTask({ ...base, due_datetime: "2025-06-15T10:00:00", duration: 45, duration_unit: "minute" });
+			expect(warn).toHaveBeenCalledWith(expect.stringContaining("Task durations require a Todoist Pro plan"));
+		});
+
+		it("does not warn when the duration is kept (Pro account)", async () => {
+			const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+			vi.mocked(requestUrl).mockResolvedValueOnce({
+				status: 200,
+				json: { id: "t1", content: "Test task", duration: { amount: 45, unit: "minute" } },
+				text: "",
+			} as never);
+
+			await api.addTask({ ...base, due_datetime: "2025-06-15T10:00:00", duration: 45, duration_unit: "minute" });
+			expect(warn).not.toHaveBeenCalled();
+		});
+
+		it("warns only once per task for the same feature", async () => {
+			const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+			const dropped = { status: 200, json: { id: "t1", content: "Test task", duration: null }, text: "" };
+			vi.mocked(requestUrl).mockResolvedValueOnce(dropped as never).mockResolvedValueOnce(dropped as never);
+
+			await api.addTask({ ...base, duration: 45, duration_unit: "minute" });
+			await api.addTask({ ...base, duration: 45, duration_unit: "minute" });
+			expect(warn).toHaveBeenCalledTimes(1);
+		});
+
+		it("updateTask with only a deadline sends nothing more after the 403", async () => {
+			vi.spyOn(console, "warn").mockImplementation(() => {});
+			vi.mocked(requestUrl).mockResolvedValueOnce(premiumOnly as never);
+
+			await expect(api.updateTask("t1", { deadline_date: "2025-12-31" })).resolves.toBeUndefined();
+			expect(vi.mocked(requestUrl)).toHaveBeenCalledTimes(1);
+		});
+
+		it("updateTask keeps the other changes when the deadline is rejected", async () => {
+			vi.spyOn(console, "warn").mockImplementation(() => {});
+			vi.mocked(requestUrl)
+				.mockResolvedValueOnce(premiumOnly as never)
+				.mockResolvedValueOnce({ status: 200, json: { id: "t1", content: "New" }, text: "" } as never);
+
+			await expect(
+				api.updateTask("t1", { content: "New", deadline_date: "2025-12-31" }),
+			).resolves.toMatchObject({ content: "New" });
+			expect(bodyOf(1)).toEqual({ content: "New" });
+		});
+	});
+
 	describe("getTaskById", () => {
 		it("returns the parsed task JSON on status 200", async () => {
 			vi.mocked(requestUrl).mockResolvedValueOnce({

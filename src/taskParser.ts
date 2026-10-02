@@ -96,14 +96,9 @@ export class TaskParser {
 		}
 		if (dueDateVsDatetime === "time") {
 			dueTime = this.getDueTimeFromLineText(textWithoutIndentation, filepath, lineNumber) ?? "";
-			const currentDate = new Date().toISOString().split("T")[0];
-			dueDatetime = `${currentDate}T${dueTime}:00`;
-			await this.plugin.fileOperation?.addCurrentDateToTask(
-				lineNumber ?? 0,
-				filepath,
-				currentDate,
-				dueTime,
-			);
+			// The date is written into the line by the new-task check, together
+			// with the tid link (see addCurrentDateToLineText).
+			dueDatetime = `${this.getTodayLocalDateString()}T${dueTime}:00`;
 		}
 		if (dueDateVsDatetime === "date") {
 			dueDate = this.getDueDateFromLineText(textWithoutIndentation) ?? "";
@@ -1014,6 +1009,34 @@ export class TaskParser {
 		);
 		const obsidianUrl = `[${filepath}](${url})`;
 		return obsidianUrl;
+	}
+
+	// Today's date in the local timezone, as YYYY-MM-DD
+	getTodayLocalDateString(): string {
+		const now = new Date();
+		const month = String(now.getMonth() + 1).padStart(2, "0");
+		const day = String(now.getDate()).padStart(2, "0");
+		return `${now.getFullYear()}-${month}-${day}`;
+	}
+
+	// A task with a due time but no due date is due today: returns the line with
+	// today's date inserted before the time (e.g. "⏰14:30" → "🗓️2025-06-01 ⏰14:30").
+	// Any other line is returned unchanged.
+	addCurrentDateToLineText(lineText: string): string {
+		if (
+			this.hasCalendarEmoji(lineText) ||
+			this.hasDueDate(lineText) ||
+			!this.hasDueTime(lineText)
+		) {
+			return lineText;
+		}
+		const dueTimeRegex = new RegExp(
+			`(?:${this.keywords_function("DUE_TIME")})\\s?(\\d{1,2}:\\d{2})`,
+		);
+		return lineText.replace(
+			dueTimeRegex,
+			(_match, time: string) => `🗓️${this.getTodayLocalDateString()} ⏰${time}`,
+		);
 	}
 
 	addTodoistLink(line_text: string, todoistLink: string): string {

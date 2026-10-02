@@ -10,7 +10,7 @@ This is a fork of [Ultimate Todoist Sync for Obsidian](https://github.com/HeroBl
 
 - **Plugin ID**: `another-simple-todoist-sync`
 - **Plugin name**: Another Simple Todoist Sync
-- **Current version**: 0.8.2
+- **Current version**: 0.8.5
 - **License**: GNU GPLv3
 
 ---
@@ -51,6 +51,7 @@ tests/                   # Vitest unit tests (see "Testing")
   helpers/mockPlugin.ts  # createMockPlugin / createMockApp factories
   setup.ts               # Forces TZ=UTC for deterministic date/time tests
   *.test.ts              # One suite per covered module
+e2e/                     # End-to-end suite: real Obsidian + real Todoist (own package.json; see e2e/README.md)
 vitest.config.ts         # Vitest config (runtime module aliases → mocks, coverage)
 tsconfig.test.json       # TypeScript config for type-checking the tests
 attachment/
@@ -168,6 +169,7 @@ Orchestrates sync operations:
 ### `TodoistNewAPI` (`src/todoistAPI.ts`)
 Every method is a hand-rolled `requestUrl` call against Todoist's Unified API — no SDK. Key methods:
 - `addTask()`, `updateTask()`, `deleteTask()`, `closeTask()`, `openTask()`, `moveTaskToAnotherSection()`
+- Both `addTask()` and `updateTask()` go through `postTask()`, which handles Todoist Pro features on a free account. A deadline rejected with `403 PREMIUM_ONLY` is retried without it, and a duration Todoist silently drops is detected. Either way the user gets a Notice, shown once per task and feature per session.
 - `getTaskById(taskId)` — fetches a single task by ID (used by import modal); uses `throw: false` so the full error body is available on 4xx
 - `getUserResource()` — fetches user profile (email, timezone, language)
 - `getNonObsidianAllActivityEvents()` — fetches Todoist events (used for Todoist→Obsidian sync)
@@ -183,7 +185,6 @@ Reads/writes the `settings` data store. Manages:
 Modifies actual vault files:
 - `completeTaskInTheFile()` / `incompleteTaskInTheFile()` — toggle `[ ]` ↔ `[x]`
 - `addTodoistLinkToFile()` — appends `tid` metadata after task creation
-- `addCurrentDateToTask()` — inserts today's date when only time is given
 
 ### `ImportTaskFromTodoistModal` (`src/importTaskModal.ts`)
 Modal triggered by the "Import task from Todoist link" command. Flow:
@@ -223,6 +224,7 @@ These are gated behind the "Experimental features" toggle in settings:
 - **Sub-project tag matching**: If a tag is `#Project/SubProject`, the plugin extracts only `SubProject` for project matching (split on `/`).
 - **First tag = project**: When a task has multiple `#tags`, the first one that matches an existing Todoist project name is used as the project.
 - **Todoist API pagination**: Projects and sections are fetched in paginated calls; the plugin retrieves all pages (fixed in v0.5.10).
+- **Time without a date**: `TaskParser.addCurrentDateToLineText()` inserts today's (local) date. The new-task checks apply it in the same edit that appends the tid link. The parser must not write to the file itself: a separate `vault.modify` collides with the editor's `replaceRange` and corrupts the line.
 - **Todoist v1 API `due` object**: Unlike the older v2 REST API, the v1 unified API puts the full datetime into `due.date` (e.g. `"2026-05-31T18:00:00"`) when a time is set. There is no separate `due.datetime` field. Always split on `"T"` before using `due.date` as a date string.
 
 ---
@@ -252,6 +254,20 @@ Run with `npm test` (`vitest run`), `npm run test:watch`, or `npm run test:cover
 - **Out of scope** (need a full Obsidian/integration environment, not unit-tested): `main.ts`, `syncModule.ts`, `fileOperation.ts`.
 
 When adding a parsing/cache/import/API feature, add or update the matching `tests/*.test.ts` suite.
+
+### End-to-end tests (`e2e/`)
+
+A separate Playwright package that launches **real Obsidian** (attached over CDP) against an isolated, generated vault and asserts against the **real Todoist API** using a dedicated throwaway account — no mocks. Full docs: `e2e/README.md`.
+
+- Run from `e2e/`: `npm run test:smoke` (`@smoke` subset), `npm run test:e2e` (full matrix), `npm run check:harness` (UI automation self-test, no Todoist). Prefix with `xvfb-run -a` on headless machines.
+- Needs `TODOIST_E2E_TOKEN` + `TODOIST_E2E_EXPECTED_EMAIL` (in `e2e/.env`); the run refuses any other account and deletes all `e2e*` projects/labels on it.
+- Todoist Pro features (duration, deadlines) are tested only with `E2E_PREMIUM=1` (the account must be on Pro); by default they're skipped and free-plan tests assert the plugin's "requires a Todoist Pro plan" warning instead.
+- Each run writes `e2e/results/<timestamp>-v<version>/summary.md` (+ HTML/JSON reports, failure artifacts) and appends to `history.csv`.
+- Unimplemented behaviour is written as `test.fail(...)` ("known gap"); if one starts passing the run fails with UNEXPECTED PASS — remove the marker.
+- Local only: there is deliberately no CI workflow for it — whoever develops the plugin runs it on their own machine.
+- `e2e/` is excluded from the root `tsconfig.json` and ESLint; it type-checks with `npm run typecheck --prefix e2e`.
+
+When changing user-visible sync behaviour, add or update the matching `e2e/tests/*.spec.ts` test (and flip a `test.fail` marker if you implement a known gap).
 
 ### Manual testing in Obsidian
 

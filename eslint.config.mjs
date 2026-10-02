@@ -8,7 +8,7 @@ export default defineConfig([
 	{
 		// npm_scripts/ are Node build tooling, not shipped plugin code, so
 		// Node-builtin/globals rules meant for the plugin runtime don't apply.
-		ignores: ["node_modules/", "main.js", "LocalBuild/", "coverage/", "tests/", "npm_scripts/", "vitest.config.ts"],
+		ignores: ["node_modules/", "main.js", "LocalBuild/", "coverage/", "tests/", "npm_scripts/", "vitest.config.ts", "e2e/"],
 	},
 	...obsidianmd.configs.recommended,
 	{
